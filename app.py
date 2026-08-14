@@ -3,7 +3,7 @@
 
 from flask import Flask, request, jsonify, render_template, Response
 from scanner import run_scan
-from report import generate_html_report
+from report import generate_report, generate_html_report
 import threading
 import uuid
 import json
@@ -78,13 +78,17 @@ def scan_details(scan_id):
 
 @app.route("/report/<scan_id>")
 def get_report(scan_id):
+    """Generate and serve the professional 6-page HTML/PDF security report."""
     if scan_id not in scan_results:
         return "<h1>Report not found</h1>", 404
     result = scan_results[scan_id]
     if "error" in result and "findings" not in result:
         return f"<h1>Scan Error</h1><p>{result['error']}</p>", 500
-    html = generate_html_report(result)
-    return Response(html, mimetype="text/html")
+    html = generate_report(result, target_url=result.get("target"))
+    return Response(html, mimetype="text/html", headers={
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-cache"
+    })
 
 
 @app.route("/report/<scan_id>/json")
