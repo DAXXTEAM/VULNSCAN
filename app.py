@@ -45,7 +45,7 @@ def start_scan():
 
     thread = threading.Thread(target=do_scan)
     thread.start()
-    thread.join(timeout=60)
+    thread.join(timeout=90)
 
     if scan_status[scan_id] == "running":
         return jsonify({"scan_id": scan_id, "status": "running"}), 202
@@ -64,6 +64,16 @@ def scan_progress(scan_id):
     if status == "complete":
         return jsonify({"status": "complete", "result": scan_results[scan_id]})
     return jsonify({"status": status})
+
+
+@app.route("/scan/<scan_id>/details")
+def scan_details(scan_id):
+    if scan_id not in scan_results:
+        return jsonify({"error": "Scan not found"}), 404
+    result = scan_results[scan_id]
+    if "error" in result and "findings" not in result:
+        return jsonify({"error": result["error"]}), 500
+    return jsonify(result)
 
 
 @app.route("/report/<scan_id>")
@@ -89,6 +99,7 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     print("\n" + "=" * 50)
     print("  VULNSCAN - Automated Web Security Scanner")
+    print("  Comprehensive Edition - 15 Check Modules")
     print("  http://localhost:5000")
     print("=" * 50 + "\n")
     app.run(host="0.0.0.0", port=5000, debug=False)

@@ -13,13 +13,13 @@
             min-height: 100vh;
         }
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 40px 20px;
         }
         .header {
             text-align: center;
-            margin-bottom: 50px;
+            margin-bottom: 40px;
         }
         .header h1 {
             font-size: 52px;
@@ -61,9 +61,7 @@
             border-color: #00ff88;
             box-shadow: 0 0 10px rgba(0, 255, 136, 0.1);
         }
-        .url-input::placeholder {
-            color: #444;
-        }
+        .url-input::placeholder { color: #444; }
         .scan-btn {
             background: #00ff88;
             color: #000;
@@ -89,10 +87,7 @@
             transform: none;
             box-shadow: none;
         }
-        .progress-section {
-            display: none;
-            margin-bottom: 30px;
-        }
+        .progress-section { display: none; margin-bottom: 30px; }
         .progress-bar-container {
             background: #111;
             border: 1px solid #1a1a3a;
@@ -119,14 +114,10 @@
             transition: width 0.5s ease;
             width: 0%;
         }
-        .scanner-animation {
-            text-align: center;
-            margin: 15px 0;
-        }
+        .scanner-animation { text-align: center; margin: 15px 0; }
         .scanner-dots span {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             margin: 0 4px;
             background: #00ff88;
             border-radius: 50%;
@@ -140,47 +131,56 @@
             40% { transform: scale(1); opacity: 1; }
         }
         .results-section { display: none; }
-        .summary-bar {
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
             background: #111;
             border: 1px solid #1a1a3a;
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 20px;
+            text-align: center;
+        }
+        .summary-card .num {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .summary-card .lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+        .risk-banner {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 10px;
+            padding: 16px 24px;
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
-        }
-        .summary-stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .stat {
-            text-align: center;
-        }
-        .stat .num {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .stat .lbl {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #666;
-            margin-top: 2px;
+            gap: 10px;
         }
         .risk-badge {
-            padding: 8px 16px;
+            padding: 8px 20px;
             border-radius: 6px;
             font-weight: bold;
             font-size: 14px;
             letter-spacing: 1px;
         }
+        .scan-meta { color: #555; font-size: 13px; }
         .actions-bar {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             flex-wrap: wrap;
         }
         .action-btn {
@@ -199,11 +199,160 @@
             background: #222;
             border-color: #00ff88;
         }
-        .findings-list {
+
+        /* Accordion Sections */
+        .section-accordion {
+            margin-bottom: 12px;
+            border: 1px solid #1a1a3a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: #111;
+            padding: 16px 20px;
+            cursor: pointer;
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .section-header:hover { background: #1a1a2a; }
+        .section-header h3 {
+            font-size: 15px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-header .badge {
+            background: #1a1a3a;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #00ff88;
+        }
+        .section-header .arrow {
+            transition: transform 0.3s;
+            color: #555;
+        }
+        .section-header.open .arrow { transform: rotate(180deg); }
+        .section-content {
+            display: none;
+            padding: 16px 20px;
+            background: #0a0a1a;
+            border-top: 1px solid #1a1a3a;
+        }
+        .section-content.open { display: block; }
+
+        /* Headers Table */
+        .headers-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .headers-table th, .headers-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #1a1a3a;
+            font-size: 13px;
+        }
+        .headers-table th {
+            color: #888;
+            font-weight: normal;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        .check-icon { color: #00ff88; font-size: 18px; }
+        .cross-icon { color: #ff4444; font-size: 18px; }
+
+        /* Tags */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tech-tag {
+            background: #1a1a3a;
+            border: 1px solid #333;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #00ff88;
+        }
+
+        /* Lists */
+        .detail-list {
+            list-style: none;
+        }
+        .detail-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a3a;
+            font-size: 13px;
+            color: #ccc;
+            font-family: monospace;
+        }
+        .detail-list li:last-child { border-bottom: none; }
+
+        /* SSL Info */
+        .ssl-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
         }
+        .ssl-item {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .ssl-item .label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .ssl-item .value {
+            font-size: 14px;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        /* Forms */
+        .form-card {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .form-card .form-meta {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+        .form-issue {
+            color: #ff4444;
+            font-size: 12px;
+            padding: 2px 0;
+        }
+
+        /* Port badges */
+        .port-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .port-badge {
+            background: #1a1a3a;
+            border: 1px solid #00ff88;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #00ff88;
+            font-family: monospace;
+        }
+
+        /* Findings */
+        .findings-list { display: flex; flex-direction: column; gap: 12px; }
         .finding-card {
             background: #111;
             border: 1px solid #1a1a3a;
@@ -211,9 +360,7 @@
             padding: 18px;
             transition: border-color 0.3s;
         }
-        .finding-card:hover {
-            border-color: #333;
-        }
+        .finding-card:hover { border-color: #333; }
         .finding-top {
             display: flex;
             align-items: center;
@@ -249,17 +396,8 @@
             padding: 2px 8px;
             border-radius: 3px;
         }
-        .finding-title {
-            font-size: 15px;
-            color: #fff;
-            margin-bottom: 6px;
-        }
-        .finding-desc {
-            font-size: 13px;
-            color: #999;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
+        .finding-title { font-size: 15px; color: #fff; margin-bottom: 6px; }
+        .finding-desc { font-size: 13px; color: #999; margin-bottom: 10px; line-height: 1.5; }
         .finding-fix {
             background: #0a0a1a;
             border-left: 3px solid #ffaa00;
@@ -268,19 +406,20 @@
             font-size: 12px;
             color: #ccc;
         }
-        .finding-fix strong {
-            color: #ffaa00;
-        }
+        .finding-fix strong { color: #ffaa00; }
         .footer {
             text-align: center;
             margin-top: 50px;
             color: #333;
             font-size: 12px;
         }
-        @media (max-width: 600px) {
+        .no-data { color: #555; font-style: italic; font-size: 13px; padding: 10px 0; }
+
+        @media (max-width: 768px) {
             .input-group { flex-direction: column; }
             .header h1 { font-size: 36px; }
-            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .summary-cards { grid-template-columns: repeat(3, 1fr); }
+            .ssl-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -288,13 +427,13 @@
     <div class="container">
         <div class="header">
             <h1>VULNSCAN</h1>
-            <p>Automated Web Security Scanner</p>
+            <p>Comprehensive Web Security Scanner &bull; 15 Modules &bull; 100+ Checks</p>
         </div>
 
         <div class="scan-box">
             <div class="input-group">
-                <input type="text" class="url-input" id="urlInput" 
-                       placeholder="https://example.com" 
+                <input type="text" class="url-input" id="urlInput"
+                       placeholder="https://example.com"
                        autocomplete="off" spellcheck="false">
                 <button class="scan-btn" id="scanBtn" onclick="startScan()">SCAN</button>
             </div>
@@ -315,23 +454,41 @@
         </div>
 
         <div class="results-section" id="resultsSection">
-            <div class="summary-bar" id="summaryBar"></div>
+            <!-- Summary Cards -->
+            <div class="summary-cards" id="summaryCards"></div>
+            <div class="risk-banner" id="riskBanner"></div>
             <div class="actions-bar" id="actionsBar"></div>
-            <div class="findings-list" id="findingsList"></div>
+
+            <!-- Detail Sections -->
+            <div id="detailSections"></div>
+
+            <!-- All Findings -->
+            <div class="section-accordion">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h3>&#128270; All Findings <span class="badge" id="findingsCount">0</span></h3>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="section-content">
+                    <div class="findings-list" id="findingsList"></div>
+                </div>
+            </div>
         </div>
 
         <div class="footer">
             <p>VULNSCAN &mdash; Passive Reconnaissance Only &mdash; No Active Exploitation</p>
+            <p>github.com/DAXXTEAM/VULNSCAN</p>
         </div>
     </div>
 
     <script>
         const urlInput = document.getElementById('urlInput');
-        const scanBtn = document.getElementById('scanBtn');
+        urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') startScan(); });
 
-        urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') startScan();
-        });
+        function toggleSection(el) {
+            el.classList.toggle('open');
+            const content = el.nextElementSibling;
+            content.classList.toggle('open');
+        }
 
         async function startScan() {
             const url = urlInput.value.trim();
@@ -341,22 +498,21 @@
                 return;
             }
 
+            const scanBtn = document.getElementById('scanBtn');
             scanBtn.disabled = true;
             scanBtn.textContent = 'SCANNING...';
             document.getElementById('progressSection').style.display = 'block';
             document.getElementById('resultsSection').style.display = 'none';
 
             const steps = [
-                'Resolving target...',
-                'Checking SSL/TLS...',
-                'Analyzing security headers...',
-                'Detecting technology stack...',
-                'Scanning for exposed files...',
-                'Querying DNS records...',
-                'Checking robots.txt...',
-                'Analyzing cookies...',
-                'Testing CORS policy...',
-                'Finalizing report...'
+                'Resolving target...', 'Checking SSL/TLS certificates...',
+                'Analyzing security headers...', 'Detecting technology stack...',
+                'Scanning 100+ exposed file paths...', 'Querying DNS records...',
+                'Checking robots.txt...', 'Analyzing cookies & CORS...',
+                'Scanning ports...', 'Harvesting emails...',
+                'Finding social media links...', 'Analyzing forms...',
+                'Checking JavaScript files...', 'Analyzing external resources...',
+                'Finalizing comprehensive report...'
             ];
 
             let step = 0;
@@ -366,7 +522,7 @@
                     document.getElementById('progressFill').style.width = ((step + 1) / steps.length * 90) + '%';
                     step++;
                 }
-            }, 1500);
+            }, 2000);
 
             try {
                 const response = await fetch('/scan', {
@@ -383,7 +539,7 @@
 
                 if (data.status === 'running') {
                     await pollForResults(data.scan_id);
-                } else if (data.error) {
+                } else if (data.error && !data.findings) {
                     showError(data.error);
                 } else {
                     setTimeout(() => renderResults(data), 500);
@@ -398,7 +554,7 @@
         }
 
         async function pollForResults(scanId) {
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 45; i++) {
                 await new Promise(r => setTimeout(r, 2000));
                 const resp = await fetch(`/scan/${scanId}/status`);
                 const data = await resp.json();
@@ -417,7 +573,9 @@
         function showError(msg) {
             document.getElementById('progressSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
-            document.getElementById('summaryBar').innerHTML = `<span style="color:#ff0055">Error: ${msg}</span>`;
+            document.getElementById('summaryCards').innerHTML = '';
+            document.getElementById('riskBanner').innerHTML = `<span style="color:#ff0055">&#9888; Error: ${msg}</span>`;
+            document.getElementById('detailSections').innerHTML = '';
             document.getElementById('findingsList').innerHTML = '';
             document.getElementById('actionsBar').innerHTML = '';
         }
@@ -431,25 +589,82 @@
             document.getElementById('progressSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
 
+            // Summary Cards
             const riskColor = getRiskColor(data.risk_level);
-            document.getElementById('summaryBar').innerHTML = `
-                <div class="summary-stats">
-                    <div class="stat"><div class="num" style="color:#ff0040">${data.stats.critical}</div><div class="lbl">Critical</div></div>
-                    <div class="stat"><div class="num" style="color:#ff4444">${data.stats.high}</div><div class="lbl">High</div></div>
-                    <div class="stat"><div class="num" style="color:#ffaa00">${data.stats.medium}</div><div class="lbl">Medium</div></div>
-                    <div class="stat"><div class="num" style="color:#00ccff">${data.stats.low}</div><div class="lbl">Low</div></div>
-                    <div class="stat"><div class="num" style="color:#888">${data.stats.info}</div><div class="lbl">Info</div></div>
+            document.getElementById('summaryCards').innerHTML = `
+                <div class="summary-card"><div class="num" style="color:#ff0040">${data.stats.critical}</div><div class="lbl">Critical</div></div>
+                <div class="summary-card"><div class="num" style="color:#ff4444">${data.stats.high}</div><div class="lbl">High</div></div>
+                <div class="summary-card"><div class="num" style="color:#ffaa00">${data.stats.medium}</div><div class="lbl">Medium</div></div>
+                <div class="summary-card"><div class="num" style="color:#00ccff">${data.stats.low}</div><div class="lbl">Low</div></div>
+                <div class="summary-card"><div class="num" style="color:#888">${data.stats.info}</div><div class="lbl">Info</div></div>
+            `;
+
+            document.getElementById('riskBanner').innerHTML = `
+                <div>
+                    <span class="risk-badge" style="background:${riskColor};color:#fff">${data.risk_level}</span>
+                    <span style="margin-left:12px;color:#888;">Max CVSS: ${data.max_cvss}</span>
                 </div>
-                <div class="risk-badge" style="background:${riskColor};color:#fff">${data.risk_level} (CVSS: ${data.max_cvss})</div>
+                <div class="scan-meta">
+                    ${data.total_findings} findings &bull; ${data.duration_seconds}s &bull; ${data.paths_checked || '100+' } paths checked
+                </div>
             `;
 
             document.getElementById('actionsBar').innerHTML = `
-                <a class="action-btn" href="/report/${data.scan_id}" target="_blank">&#128196; View HTML Report</a>
-                <a class="action-btn" href="/report/${data.scan_id}/json" target="_blank">&#128190; Download JSON</a>
-                <button class="action-btn" onclick="window.print()">&#128424; Print/PDF</button>
-                <span style="color:#555;font-size:12px;align-self:center;">Scanned in ${data.duration_seconds}s | ${data.total_findings} findings</span>
+                <a class="action-btn" href="/report/${data.scan_id}" target="_blank">&#128196; HTML Report</a>
+                <a class="action-btn" href="/report/${data.scan_id}/json" target="_blank">&#128190; JSON Export</a>
+                <a class="action-btn" href="/scan/${data.scan_id}/details" target="_blank">&#128203; Full Details API</a>
+                <button class="action-btn" onclick="downloadReport('${data.scan_id}')">&#11015; Download Report</button>
             `;
 
+            // Build detail sections
+            let sections = '';
+            const details = data.details || {};
+
+            // Exposed Files
+            const exposedFiles = details.exposed_files || [];
+            const exposed200 = exposedFiles.filter(f => f.status === 200);
+            const exposed403 = exposedFiles.filter(f => f.status === 403);
+            sections += buildAccordion('&#128194; Exposed Files', `${exposed200.length} accessible, ${exposed403.length} forbidden`, renderExposedFiles(exposed200, exposed403));
+
+            // Security Headers
+            sections += buildAccordion('&#128737; Security Headers', '', renderHeadersTable(details.headers_detail || {}));
+
+            // Technology Stack
+            const techList = details.tech_list || [];
+            sections += buildAccordion('&#9881; Technology Stack', `${techList.length} detected`, renderTechStack(techList, details.tech_detail || {}));
+
+            // SSL Info
+            sections += buildAccordion('&#128274; SSL/TLS Certificate', '', renderSSL(details.ssl_detail || {}));
+
+            // Emails
+            const emails = details.emails || [];
+            sections += buildAccordion('&#128231; Emails Found', `${emails.length}`, renderEmails(emails));
+
+            // Forms
+            const forms = details.forms || [];
+            sections += buildAccordion('&#128221; Form Analysis', `${forms.length} forms`, renderForms(forms));
+
+            // Ports
+            const ports = details.open_ports || [];
+            sections += buildAccordion('&#128268; Open Ports', `${ports.length} open`, renderPorts(ports));
+
+            // Social Media
+            const social = details.social_links || {};
+            const socialCount = Object.keys(social).length;
+            sections += buildAccordion('&#127760; Social Media', `${socialCount} platforms`, renderSocial(social));
+
+            // External Domains
+            const extDomains = details.external_domains || [];
+            sections += buildAccordion('&#128279; External Resources', `${extDomains.length} domains`, renderExternal(extDomains));
+
+            // JavaScript
+            const jsFiles = details.javascript || [];
+            sections += buildAccordion('&#128220; JavaScript Files', `${jsFiles.length} scripts`, renderJS(jsFiles));
+
+            document.getElementById('detailSections').innerHTML = sections;
+
+            // All Findings
+            document.getElementById('findingsCount').textContent = data.total_findings;
             let html = '';
             for (const f of data.findings) {
                 html += `
@@ -460,11 +675,193 @@
                         <span class="category-tag">${f.category || ''}</span>
                     </div>
                     <div class="finding-title">${f.title}</div>
-                    <div class="finding-desc">${f.description}</div>
-                    <div class="finding-fix"><strong>Fix:</strong> ${f.recommendation}</div>
+                    <div class="finding-desc">${escapeHtml(f.description)}</div>
+                    <div class="finding-fix"><strong>Fix:</strong> ${escapeHtml(f.recommendation)}</div>
                 </div>`;
             }
             document.getElementById('findingsList').innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function buildAccordion(title, badge, content) {
+            return `
+            <div class="section-accordion">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h3>${title} ${badge ? `<span class="badge">${badge}</span>` : ''}</h3>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="section-content">${content}</div>
+            </div>`;
+        }
+
+        function renderExposedFiles(exposed200, exposed403) {
+            if (!exposed200.length && !exposed403.length) return '<p class="no-data">No exposed files found. All 100+ paths returned 404.</p>';
+            let html = '';
+            if (exposed200.length) {
+                html += '<h4 style="color:#ff4444;margin-bottom:8px;">&#9888; Accessible (HTTP 200)</h4><ul class="detail-list">';
+                for (const f of exposed200) {
+                    html += `<li><span style="color:${f.severity==='high'?'#ff4444':'#ffaa00'}">[${f.severity.toUpperCase()}]</span> <a href="${escapeHtml(f.url)}" target="_blank" style="color:#00ff88;">${escapeHtml(f.path)}</a></li>`;
+                }
+                html += '</ul>';
+            }
+            if (exposed403.length) {
+                html += '<h4 style="color:#ffaa00;margin:16px 0 8px;">&#128274; Forbidden (HTTP 403)</h4><ul class="detail-list">';
+                for (const f of exposed403) {
+                    html += `<li style="color:#888;">${escapeHtml(f.path)}</li>`;
+                }
+                html += '</ul>';
+            }
+            return html;
+        }
+
+        function renderHeadersTable(headers) {
+            if (!Object.keys(headers).length) return '<p class="no-data">No header data available.</p>';
+            let html = '<table class="headers-table"><tr><th>Header</th><th>Status</th><th>Expected Value</th><th>Actual Value</th></tr>';
+            for (const [name, info] of Object.entries(headers)) {
+                const icon = info.present ? '<span class="check-icon">&#10004;</span>' : '<span class="cross-icon">&#10008;</span>';
+                html += `<tr>
+                    <td style="color:#fff;font-weight:bold;">${name}</td>
+                    <td>${icon}</td>
+                    <td style="color:#666;font-family:monospace;font-size:11px;">${escapeHtml(info.expected || '')}</td>
+                    <td style="color:${info.present ? '#00ff88' : '#ff4444'};font-family:monospace;font-size:11px;">${info.present ? escapeHtml(info.actual || 'Set') : 'Missing'}</td>
+                </tr>`;
+            }
+            html += '</table>';
+            return html;
+        }
+
+        function renderTechStack(techList, techDetail) {
+            if (!techList.length && !Object.keys(techDetail).length) return '<p class="no-data">No technologies detected.</p>';
+            let html = '<div class="tech-tags">';
+            for (const t of techList) {
+                html += `<span class="tech-tag">${escapeHtml(t)}</span>`;
+            }
+            html += '</div>';
+            if (Object.keys(techDetail).length) {
+                html += '<div style="margin-top:12px;font-size:12px;color:#888;">';
+                for (const [key, val] of Object.entries(techDetail)) {
+                    html += `<div><strong style="color:#666;">${key}:</strong> <span style="color:#ccc;">${escapeHtml(String(val))}</span></div>`;
+                }
+                html += '</div>';
+            }
+            return html;
+        }
+
+        function renderSSL(ssl) {
+            if (!Object.keys(ssl).length) return '<p class="no-data">No SSL data available.</p>';
+            if (ssl.error) return `<p style="color:#ff4444;">SSL Error: ${escapeHtml(ssl.error)}</p>`;
+            let html = '<div class="ssl-grid">';
+            const items = [
+                ['Status', ssl.valid ? '&#10004; Valid' : '&#10008; Invalid', ssl.valid ? '#00ff88' : '#ff4444'],
+                ['Days Remaining', String(ssl.days_remaining || 'N/A'), ssl.days_remaining > 30 ? '#00ff88' : '#ff4444'],
+                ['Expires', ssl.expires || 'N/A', '#fff'],
+                ['Issued', ssl.issued || 'N/A', '#fff'],
+                ['Issuer', ssl.issuer || 'N/A', '#fff'],
+                ['Subject', ssl.subject || 'N/A', '#fff'],
+                ['Protocol', ssl.protocol || 'N/A', '#00ff88'],
+                ['Deprecated TLS', ssl.deprecated_tls ? 'YES &#9888;' : 'No', ssl.deprecated_tls ? '#ff4444' : '#00ff88'],
+            ];
+            for (const [label, value, color] of items) {
+                html += `<div class="ssl-item"><div class="label">${label}</div><div class="value" style="color:${color}">${value}</div></div>`;
+            }
+            html += '</div>';
+            if (ssl.sans && ssl.sans.length) {
+                html += `<div style="margin-top:12px;"><strong style="color:#666;font-size:12px;">Subject Alternative Names:</strong><div style="font-size:12px;color:#888;margin-top:4px;">${ssl.sans.join(', ')}</div></div>`;
+            }
+            return html;
+        }
+
+        function renderEmails(emails) {
+            if (!emails.length) return '<p class="no-data">No email addresses found in page source.</p>';
+            let html = '<ul class="detail-list">';
+            for (const e of emails) {
+                html += `<li>&#128231; ${escapeHtml(e)}</li>`;
+            }
+            html += '</ul>';
+            return html;
+        }
+
+        function renderForms(forms) {
+            if (!forms.length) return '<p class="no-data">No HTML forms found on the page.</p>';
+            let html = '';
+            for (const f of forms) {
+                html += `<div class="form-card">
+                    <div class="form-meta">Form #${f.index} &bull; Method: <strong>${f.method}</strong> &bull; Action: <code>${escapeHtml(f.action || '(same page)')}</code> &bull; ${f.input_count} inputs ${f.has_password ? '&#128273;' : ''}</div>`;
+                if (f.issues && f.issues.length) {
+                    for (const issue of f.issues) {
+                        html += `<div class="form-issue">&#9888; ${escapeHtml(issue)}</div>`;
+                    }
+                } else {
+                    html += '<div style="color:#00ff88;font-size:12px;">&#10004; No issues detected</div>';
+                }
+                html += '</div>';
+            }
+            return html;
+        }
+
+        function renderPorts(ports) {
+            if (!ports.length) return '<p class="no-data">No open ports detected from common web ports scan.</p>';
+            let html = '<div class="port-badges">';
+            for (const p of ports) {
+                html += `<span class="port-badge">${p}</span>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderSocial(social) {
+            if (!Object.keys(social).length) return '<p class="no-data">No social media links found.</p>';
+            let html = '<ul class="detail-list">';
+            for (const [platform, links] of Object.entries(social)) {
+                for (const link of links) {
+                    html += `<li><strong style="color:#00ff88;">${platform}:</strong> <a href="${escapeHtml(link)}" target="_blank" style="color:#888;">${escapeHtml(link)}</a></li>`;
+                }
+            }
+            html += '</ul>';
+            return html;
+        }
+
+        function renderExternal(domains) {
+            if (!domains.length) return '<p class="no-data">No external domains detected.</p>';
+            let html = `<p style="color:#888;font-size:12px;margin-bottom:10px;">${domains.length} external domains loading resources on this page:</p>`;
+            html += '<div class="tech-tags">';
+            for (const d of domains) {
+                html += `<span class="tech-tag" style="color:#888;border-color:#333;">${escapeHtml(d)}</span>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderJS(jsFiles) {
+            if (!jsFiles.length) return '<p class="no-data">No external JavaScript files detected.</p>';
+            let html = '<ul class="detail-list">';
+            for (const js of jsFiles) {
+                let issues = '';
+                if (js.issues && js.issues.length) {
+                    issues = ' <span style="color:#ff4444;">(' + js.issues.join(', ') + ')</span>';
+                }
+                const icon = js.external ? '&#127760;' : '&#128196;';
+                html += `<li>${icon} <span style="color:#ccc;word-break:break-all;">${escapeHtml(js.src)}</span>${issues}</li>`;
+            }
+            html += '</ul>';
+            return html;
+        }
+
+        function downloadReport(scanId) {
+            fetch(`/report/${scanId}/json`)
+                .then(r => r.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `vulnscan-report-${scanId}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
         }
     </script>
 </body>
