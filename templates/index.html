@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VULNSCAN - Web Security Scanner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .header h1 {
+            font-size: 52px;
+            color: #00ff88;
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            margin-bottom: 8px;
+        }
+        .header p {
+            color: #666;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .scan-box {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            gap: 12px;
+        }
+        .url-input {
+            flex: 1;
+            background: #0a0a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-size: 16px;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: monospace;
+        }
+        .url-input:focus {
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.1);
+        }
+        .url-input::placeholder {
+            color: #444;
+        }
+        .scan-btn {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        .scan-btn:hover {
+            background: #00cc6a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        .scan-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .progress-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+        .progress-bar-container {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 12px;
+            padding: 25px;
+        }
+        .progress-text {
+            text-align: center;
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .progress-bar {
+            height: 4px;
+            background: #1a1a3a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc6a);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        .scanner-animation {
+            text-align: center;
+            margin: 15px 0;
+        }
+        .scanner-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin: 0 4px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 1.4s infinite ease-in-out;
+        }
+        .scanner-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .scanner-dots span:nth-child(3) { animation-delay: 0.4s; }
+        .scanner-dots span:nth-child(4) { animation-delay: 0.6s; }
+        @keyframes pulse {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        .results-section { display: none; }
+        .summary-bar {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat .num {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .stat .lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            margin-top: 2px;
+        }
+        .risk-badge {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            background: #1a1a3a;
+            border: 1px solid #333;
+            color: #00ff88;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .action-btn:hover {
+            background: #222;
+            border-color: #00ff88;
+        }
+        .findings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .finding-card {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 10px;
+            padding: 18px;
+            transition: border-color 0.3s;
+        }
+        .finding-card:hover {
+            border-color: #333;
+        }
+        .finding-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .sev-badge {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sev-critical { background: #ff0040; }
+        .sev-high { background: #ff4444; }
+        .sev-medium { background: #ffaa00; color: #000; }
+        .sev-low { background: #00ccff; color: #000; }
+        .sev-info { background: #444; }
+        .cvss-tag {
+            background: #1a1a3a;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #888;
+            font-family: monospace;
+        }
+        .category-tag {
+            font-size: 11px;
+            color: #00ff88;
+            background: #0a2a1a;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+        .finding-title {
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .finding-desc {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .finding-fix {
+            background: #0a0a1a;
+            border-left: 3px solid #ffaa00;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #ccc;
+        }
+        .finding-fix strong {
+            color: #ffaa00;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #333;
+            font-size: 12px;
+        }
+        @media (max-width: 600px) {
+            .input-group { flex-direction: column; }
+            .header h1 { font-size: 36px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>VULNSCAN</h1>
+            <p>Automated Web Security Scanner</p>
+        </div>
+
+        <div class="scan-box">
+            <div class="input-group">
+                <input type="text" class="url-input" id="urlInput" 
+                       placeholder="https://example.com" 
+                       autocomplete="off" spellcheck="false">
+                <button class="scan-btn" id="scanBtn" onclick="startScan()">SCAN</button>
+            </div>
+        </div>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar-container">
+                <div class="progress-text" id="progressText">Initializing scan...</div>
+                <div class="scanner-animation">
+                    <div class="scanner-dots">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="summary-bar" id="summaryBar"></div>
+            <div class="actions-bar" id="actionsBar"></div>
+            <div class="findings-list" id="findingsList"></div>
+        </div>
+
+        <div class="footer">
+            <p>VULNSCAN &mdash; Passive Reconnaissance Only &mdash; No Active Exploitation</p>
+        </div>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const scanBtn = document.getElementById('scanBtn');
+
+        urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') startScan();
+        });
+
+        async function startScan() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                urlInput.style.borderColor = '#ff0055';
+                setTimeout(() => urlInput.style.borderColor = '#333', 2000);
+                return;
+            }
+
+            scanBtn.disabled = true;
+            scanBtn.textContent = 'SCANNING...';
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            const steps = [
+                'Resolving target...',
+                'Checking SSL/TLS...',
+                'Analyzing security headers...',
+                'Detecting technology stack...',
+                'Scanning for exposed files...',
+                'Querying DNS records...',
+                'Checking robots.txt...',
+                'Analyzing cookies...',
+                'Testing CORS policy...',
+                'Finalizing report...'
+            ];
+
+            let step = 0;
+            const progressInterval = setInterval(() => {
+                if (step < steps.length) {
+                    document.getElementById('progressText').textContent = steps[step];
+                    document.getElementById('progressFill').style.width = ((step + 1) / steps.length * 90) + '%';
+                    step++;
+                }
+            }, 1500);
+
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                clearInterval(progressInterval);
+                document.getElementById('progressFill').style.width = '100%';
+                document.getElementById('progressText').textContent = 'Scan complete!';
+
+                const data = await response.json();
+
+                if (data.status === 'running') {
+                    await pollForResults(data.scan_id);
+                } else if (data.error) {
+                    showError(data.error);
+                } else {
+                    setTimeout(() => renderResults(data), 500);
+                }
+            } catch (err) {
+                clearInterval(progressInterval);
+                showError('Network error: ' + err.message);
+            }
+
+            scanBtn.disabled = false;
+            scanBtn.textContent = 'SCAN';
+        }
+
+        async function pollForResults(scanId) {
+            for (let i = 0; i < 30; i++) {
+                await new Promise(r => setTimeout(r, 2000));
+                const resp = await fetch(`/scan/${scanId}/status`);
+                const data = await resp.json();
+                if (data.status === 'complete') {
+                    renderResults(data.result);
+                    return;
+                }
+                if (data.status === 'error') {
+                    showError('Scan failed');
+                    return;
+                }
+            }
+            showError('Scan timed out');
+        }
+
+        function showError(msg) {
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('summaryBar').innerHTML = `<span style="color:#ff0055">Error: ${msg}</span>`;
+            document.getElementById('findingsList').innerHTML = '';
+            document.getElementById('actionsBar').innerHTML = '';
+        }
+
+        function getRiskColor(level) {
+            const colors = { CRITICAL: '#ff0040', HIGH: '#ff4444', MEDIUM: '#ffaa00', LOW: '#00ccff', INFORMATIONAL: '#888' };
+            return colors[level] || '#888';
+        }
+
+        function renderResults(data) {
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+
+            const riskColor = getRiskColor(data.risk_level);
+            document.getElementById('summaryBar').innerHTML = `
+                <div class="summary-stats">
+                    <div class="stat"><div class="num" style="color:#ff0040">${data.stats.critical}</div><div class="lbl">Critical</div></div>
+                    <div class="stat"><div class="num" style="color:#ff4444">${data.stats.high}</div><div class="lbl">High</div></div>
+                    <div class="stat"><div class="num" style="color:#ffaa00">${data.stats.medium}</div><div class="lbl">Medium</div></div>
+                    <div class="stat"><div class="num" style="color:#00ccff">${data.stats.low}</div><div class="lbl">Low</div></div>
+                    <div class="stat"><div class="num" style="color:#888">${data.stats.info}</div><div class="lbl">Info</div></div>
+                </div>
+                <div class="risk-badge" style="background:${riskColor};color:#fff">${data.risk_level} (CVSS: ${data.max_cvss})</div>
+            `;
+
+            document.getElementById('actionsBar').innerHTML = `
+                <a class="action-btn" href="/report/${data.scan_id}" target="_blank">&#128196; View HTML Report</a>
+                <a class="action-btn" href="/report/${data.scan_id}/json" target="_blank">&#128190; Download JSON</a>
+                <button class="action-btn" onclick="window.print()">&#128424; Print/PDF</button>
+                <span style="color:#555;font-size:12px;align-self:center;">Scanned in ${data.duration_seconds}s | ${data.total_findings} findings</span>
+            `;
+
+            let html = '';
+            for (const f of data.findings) {
+                html += `
+                <div class="finding-card">
+                    <div class="finding-top">
+                        <span class="sev-badge sev-${f.severity}">${f.severity}</span>
+                        <span class="cvss-tag">CVSS ${f.cvss_score}</span>
+                        <span class="category-tag">${f.category || ''}</span>
+                    </div>
+                    <div class="finding-title">${f.title}</div>
+                    <div class="finding-desc">${f.description}</div>
+                    <div class="finding-fix"><strong>Fix:</strong> ${f.recommendation}</div>
+                </div>`;
+            }
+            document.getElementById('findingsList').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
