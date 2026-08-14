@@ -2,60 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>VULNSCAN - Web Security Scanner</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #0a0a1a;
             color: #e0e0e0;
             min-height: 100vh;
+            overflow-x: hidden;
         }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 40px 20px;
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #111;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 14px 20px;
+            color: #00ff88;
+            font-size: 14px;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.15);
         }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        /* Sticky Header */
         .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid #1a1a3a;
+            padding: 16px 20px;
             text-align: center;
-            margin-bottom: 40px;
         }
         .header h1 {
-            font-size: 52px;
+            font-size: 42px;
             color: #00ff88;
             letter-spacing: 8px;
             text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .header p {
             color: #666;
-            font-size: 14px;
+            font-size: 12px;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            padding-bottom: 80px;
+        }
+
+        /* Scan Box */
         .scan-box {
             background: #111;
             border: 1px solid #1a1a3a;
             border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 24px;
+            margin-bottom: 24px;
         }
         .input-group {
             display: flex;
             gap: 12px;
+            align-items: stretch;
         }
         .url-input {
             flex: 1;
             background: #0a0a1a;
             border: 1px solid #333;
             border-radius: 8px;
-            padding: 16px 20px;
+            padding: 14px 16px;
             font-size: 16px;
             color: #fff;
             outline: none;
             transition: border-color 0.3s;
             font-family: monospace;
+            min-width: 0;
         }
         .url-input:focus {
             border-color: #00ff88;
@@ -67,13 +108,15 @@
             color: #000;
             border: none;
             border-radius: 8px;
-            padding: 16px 32px;
-            font-size: 16px;
+            padding: 14px 28px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             letter-spacing: 2px;
             transition: all 0.3s;
             text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .scan-btn:hover {
             background: #00cc6a;
@@ -87,18 +130,20 @@
             transform: none;
             box-shadow: none;
         }
-        .progress-section { display: none; margin-bottom: 30px; }
+
+        /* Progress Section */
+        .progress-section { display: none; margin-bottom: 24px; }
         .progress-bar-container {
             background: #111;
             border: 1px solid #1a1a3a;
             border-radius: 12px;
-            padding: 25px;
+            padding: 20px;
         }
         .progress-text {
             text-align: center;
             color: #00ff88;
-            margin-bottom: 15px;
-            font-size: 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
             letter-spacing: 1px;
         }
         .progress-bar {
@@ -114,7 +159,7 @@
             transition: width 0.5s ease;
             width: 0%;
         }
-        .scanner-animation { text-align: center; margin: 15px 0; }
+        .scanner-animation { text-align: center; margin: 12px 0; }
         .scanner-dots span {
             display: inline-block;
             width: 8px; height: 8px;
@@ -130,39 +175,76 @@
             0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
             40% { transform: scale(1); opacity: 1; }
         }
-        .results-section { display: none; }
+
+        /* Loading Skeleton */
+        .skeleton-container { display: none; margin-bottom: 24px; }
+        .skeleton-container.show { display: block; }
+        .skeleton {
+            background: linear-gradient(90deg, #111 25%, #1a1a2a 50%, #111 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .skeleton-card { height: 80px; }
+        .skeleton-row { height: 20px; width: 80%; }
+        .skeleton-row-short { height: 20px; width: 50%; }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         /* Summary Cards */
         .summary-cards {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .summary-card {
             background: #111;
             border: 1px solid #1a1a3a;
             border-radius: 10px;
-            padding: 20px;
+            padding: 18px 12px;
             text-align: center;
+            transition: border-color 0.3s;
         }
+        .summary-card:hover { border-color: #333; }
         .summary-card .num {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
         }
         .summary-card .lbl {
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             color: #666;
             margin-top: 4px;
             letter-spacing: 1px;
         }
+
+        /* Risk Banner */
         .risk-banner {
             background: #111;
             border: 1px solid #1a1a3a;
             border-radius: 10px;
-            padding: 16px 24px;
-            margin-bottom: 20px;
+            padding: 14px 20px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -170,63 +252,78 @@
             gap: 10px;
         }
         .risk-badge {
-            padding: 8px 20px;
+            padding: 6px 16px;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             letter-spacing: 1px;
         }
-        .scan-meta { color: #555; font-size: 13px; }
+        .scan-meta { color: #555; font-size: 12px; }
+
+        /* Actions Bar */
         .actions-bar {
             display: flex;
             gap: 10px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
         }
         .action-btn {
             background: #1a1a3a;
             border: 1px solid #333;
             color: #00ff88;
-            padding: 10px 18px;
+            padding: 10px 16px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             transition: all 0.3s;
             text-decoration: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
         .action-btn:hover {
             background: #222;
             border-color: #00ff88;
         }
+        .action-btn.primary {
+            background: #00ff88;
+            color: #000;
+            border-color: #00ff88;
+            font-weight: bold;
+        }
+        .action-btn.primary:hover { background: #00cc6a; }
 
         /* Accordion Sections */
         .section-accordion {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             border: 1px solid #1a1a3a;
             border-radius: 10px;
             overflow: hidden;
         }
         .section-header {
             background: #111;
-            padding: 16px 20px;
+            padding: 14px 18px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
             transition: background 0.2s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .section-header:hover { background: #1a1a2a; }
+        .section-header:active { background: #151530; }
         .section-header h3 {
-            font-size: 15px;
+            font-size: 14px;
             color: #fff;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .section-header .badge {
             background: #1a1a3a;
-            padding: 3px 10px;
+            padding: 2px 10px;
             border-radius: 20px;
             font-size: 11px;
             color: #00ff88;
@@ -234,20 +331,34 @@
         .section-header .arrow {
             transition: transform 0.3s;
             color: #555;
+            flex-shrink: 0;
         }
         .section-header.open .arrow { transform: rotate(180deg); }
         .section-content {
-            display: none;
-            padding: 16px 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             background: #0a0a1a;
-            border-top: 1px solid #1a1a3a;
+            border-top: 1px solid transparent;
         }
-        .section-content.open { display: block; }
+        .section-content.open {
+            max-height: 3000px;
+            border-top-color: #1a1a3a;
+        }
+        .section-content-inner {
+            padding: 16px 18px;
+        }
 
         /* Headers Table */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 6px;
+        }
         .headers-table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 500px;
         }
         .headers-table th, .headers-table td {
             padding: 10px 12px;
@@ -260,6 +371,9 @@
             font-weight: normal;
             text-transform: uppercase;
             font-size: 11px;
+            position: sticky;
+            top: 0;
+            background: #0a0a1a;
         }
         .check-icon { color: #00ff88; font-size: 18px; }
         .cross-icon { color: #ff4444; font-size: 18px; }
@@ -280,40 +394,59 @@
         }
 
         /* Lists */
-        .detail-list {
-            list-style: none;
-        }
+        .detail-list { list-style: none; }
         .detail-list li {
             padding: 8px 0;
             border-bottom: 1px solid #1a1a3a;
             font-size: 13px;
             color: #ccc;
             font-family: monospace;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .detail-list li:last-child { border-bottom: none; }
+
+        /* Copy Button */
+        .copy-btn {
+            background: none;
+            border: 1px solid #333;
+            color: #666;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .copy-btn:hover { border-color: #00ff88; color: #00ff88; }
+        .copy-btn.copied { border-color: #00ff88; color: #00ff88; }
 
         /* SSL Info */
         .ssl-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
         }
         .ssl-item {
             background: #111;
             border: 1px solid #1a1a3a;
             border-radius: 8px;
-            padding: 14px;
+            padding: 12px;
         }
         .ssl-item .label {
-            font-size: 11px;
+            font-size: 10px;
             color: #666;
             text-transform: uppercase;
             margin-bottom: 4px;
         }
         .ssl-item .value {
-            font-size: 14px;
+            font-size: 13px;
             color: #fff;
             font-family: monospace;
+            word-break: break-all;
         }
 
         /* Forms */
@@ -328,6 +461,7 @@
             font-size: 12px;
             color: #888;
             margin-bottom: 6px;
+            word-break: break-all;
         }
         .form-issue {
             color: #ff4444;
@@ -357,15 +491,16 @@
             background: #111;
             border: 1px solid #1a1a3a;
             border-radius: 10px;
-            padding: 18px;
+            padding: 16px;
             transition: border-color 0.3s;
         }
         .finding-card:hover { border-color: #333; }
         .finding-top {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 8px;
+            flex-wrap: wrap;
         }
         .sev-badge {
             padding: 3px 10px;
@@ -396,8 +531,8 @@
             padding: 2px 8px;
             border-radius: 3px;
         }
-        .finding-title { font-size: 15px; color: #fff; margin-bottom: 6px; }
-        .finding-desc { font-size: 13px; color: #999; margin-bottom: 10px; line-height: 1.5; }
+        .finding-title { font-size: 14px; color: #fff; margin-bottom: 6px; }
+        .finding-desc { font-size: 13px; color: #999; margin-bottom: 10px; line-height: 1.5; word-break: break-word; }
         .finding-fix {
             background: #0a0a1a;
             border-left: 3px solid #ffaa00;
@@ -405,31 +540,150 @@
             border-radius: 4px;
             font-size: 12px;
             color: #ccc;
+            word-break: break-word;
         }
         .finding-fix strong { color: #ffaa00; }
+
+        /* Footer */
         .footer {
             text-align: center;
-            margin-top: 50px;
+            margin-top: 40px;
             color: #333;
             font-size: 12px;
         }
         .no-data { color: #555; font-style: italic; font-size: 13px; padding: 10px 0; }
 
-        @media (max-width: 768px) {
-            .input-group { flex-direction: column; }
-            .header h1 { font-size: 36px; }
+        /* Sticky Download Button */
+        .sticky-download {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid #1a1a3a;
+            padding: 12px 20px;
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .sticky-download.show {
+            display: flex;
+        }
+        .sticky-download .action-btn {
+            font-size: 13px;
+            padding: 12px 20px;
+        }
+
+        /* Scan Another Button */
+        .scan-another-box {
+            display: none;
+            text-align: center;
+            margin: 24px 0;
+            padding: 20px;
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 12px;
+        }
+        .scan-another-box.show { display: block; }
+        .scan-another-btn {
+            background: transparent;
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .scan-another-btn:hover {
+            background: #00ff88;
+            color: #000;
+        }
+
+        /* ===== RESPONSIVE ===== */
+
+        /* Tablet */
+        @media (max-width: 900px) {
             .summary-cards { grid-template-columns: repeat(3, 1fr); }
+            .ssl-grid { grid-template-columns: repeat(2, 1fr); }
+            .skeleton-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+                letter-spacing: 3px;
+            }
+            .header p { font-size: 10px; letter-spacing: 1px; }
+            .header { padding: 12px 16px; }
+            .container { padding: 16px 12px; padding-bottom: 80px; }
+            .scan-box { padding: 16px; }
+            .input-group {
+                flex-direction: column;
+            }
+            .scan-btn {
+                width: 100%;
+                padding: 14px;
+            }
+            .url-input { padding: 14px; font-size: 14px; }
+            .summary-cards {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .summary-card { padding: 14px 8px; }
+            .summary-card .num { font-size: 24px; }
+            .summary-card .lbl { font-size: 9px; }
+            .risk-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 12px 16px;
+            }
+            .actions-bar {
+                flex-direction: column;
+            }
+            .action-btn { width: 100%; justify-content: center; padding: 12px; }
+            .section-header { padding: 12px 14px; }
+            .section-header h3 { font-size: 13px; gap: 6px; }
+            .section-content-inner { padding: 12px 14px; }
+            .finding-card { padding: 14px; }
+            .finding-title { font-size: 13px; }
+            .finding-desc { font-size: 12px; }
             .ssl-grid { grid-template-columns: 1fr; }
+            .skeleton-grid { grid-template-columns: 1fr 1fr; }
+            .toast { right: 12px; left: 12px; top: 12px; }
+            .progress-bar-container { padding: 16px; }
+            .sticky-download { padding: 10px 12px; }
+            .sticky-download .action-btn { font-size: 12px; padding: 10px 14px; flex: 1; }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 400px) {
+            .header h1 { font-size: 26px; letter-spacing: 2px; }
+            .summary-cards { grid-template-columns: 1fr 1fr; }
+            .summary-card .num { font-size: 20px; }
+            .container { padding: 12px 8px; padding-bottom: 80px; }
+            .scan-box { padding: 12px; border-radius: 8px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>VULNSCAN</h1>
-            <p>Comprehensive Web Security Scanner &bull; 15 Modules &bull; 100+ Checks</p>
-        </div>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
 
+    <!-- Sticky Header -->
+    <div class="header">
+        <h1>VULNSCAN</h1>
+        <p>Web Security Scanner &bull; 15 Modules &bull; 100+ Checks</p>
+    </div>
+
+    <div class="container">
+        <!-- Scan Input -->
         <div class="scan-box">
             <div class="input-group">
                 <input type="text" class="url-input" id="urlInput"
@@ -439,6 +693,7 @@
             </div>
         </div>
 
+        <!-- Progress -->
         <div class="progress-section" id="progressSection">
             <div class="progress-bar-container">
                 <div class="progress-text" id="progressText">Initializing scan...</div>
@@ -453,25 +708,42 @@
             </div>
         </div>
 
+        <!-- Loading Skeleton -->
+        <div class="skeleton-container" id="skeletonContainer">
+            <div class="skeleton-grid">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            </div>
+            <div class="skeleton skeleton-row" style="margin-bottom:16px;"></div>
+            <div class="skeleton" style="height:50px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:50px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:50px;margin-bottom:10px;"></div>
+        </div>
+
+        <!-- Results -->
         <div class="results-section" id="resultsSection">
-            <!-- Summary Cards -->
             <div class="summary-cards" id="summaryCards"></div>
             <div class="risk-banner" id="riskBanner"></div>
             <div class="actions-bar" id="actionsBar"></div>
-
-            <!-- Detail Sections -->
             <div id="detailSections"></div>
-
-            <!-- All Findings -->
             <div class="section-accordion">
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3>&#128270; All Findings <span class="badge" id="findingsCount">0</span></h3>
                     <span class="arrow">&#9660;</span>
                 </div>
                 <div class="section-content">
-                    <div class="findings-list" id="findingsList"></div>
+                    <div class="section-content-inner">
+                        <div class="findings-list" id="findingsList"></div>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Scan Another -->
+        <div class="scan-another-box" id="scanAnotherBox">
+            <button class="scan-another-btn" onclick="scanAnother()">&#128260; Scan Another Target</button>
         </div>
 
         <div class="footer">
@@ -480,9 +752,24 @@
         </div>
     </div>
 
+    <!-- Sticky Download Bar -->
+    <div class="sticky-download" id="stickyDownload">
+        <button class="action-btn primary" id="stickyDownloadBtn" onclick="downloadCurrentReport()">&#11015; Download Report</button>
+        <button class="action-btn" onclick="scanAnother()">&#128260; Scan Another</button>
+    </div>
+
     <script>
         const urlInput = document.getElementById('urlInput');
+        let currentScanId = '';
+
         urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') startScan(); });
+
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), duration);
+        }
 
         function toggleSection(el) {
             el.classList.toggle('open');
@@ -490,19 +777,55 @@
             content.classList.toggle('open');
         }
 
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '✓';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 1500);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btn.textContent = '✓';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+            });
+        }
+
+        function scanAnother() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('scanAnotherBox').classList.remove('show');
+            document.getElementById('stickyDownload').classList.remove('show');
+            urlInput.value = '';
+            urlInput.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         async function startScan() {
             const url = urlInput.value.trim();
             if (!url) {
                 urlInput.style.borderColor = '#ff0055';
+                urlInput.focus();
                 setTimeout(() => urlInput.style.borderColor = '#333', 2000);
                 return;
             }
+
+            showToast('🚀 Scan initiated for ' + url);
 
             const scanBtn = document.getElementById('scanBtn');
             scanBtn.disabled = true;
             scanBtn.textContent = 'SCANNING...';
             document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('skeletonContainer').classList.add('show');
             document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('scanAnotherBox').classList.remove('show');
+            document.getElementById('stickyDownload').classList.remove('show');
 
             const steps = [
                 'Resolving target...', 'Checking SSL/TLS certificates...',
@@ -542,7 +865,7 @@
                 } else if (data.error && !data.findings) {
                     showError(data.error);
                 } else {
-                    setTimeout(() => renderResults(data), 500);
+                    setTimeout(() => renderResults(data), 400);
                 }
             } catch (err) {
                 clearInterval(progressInterval);
@@ -551,6 +874,7 @@
 
             scanBtn.disabled = false;
             scanBtn.textContent = 'SCAN';
+            document.getElementById('skeletonContainer').classList.remove('show');
         }
 
         async function pollForResults(scanId) {
@@ -572,12 +896,15 @@
 
         function showError(msg) {
             document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('skeletonContainer').classList.remove('show');
             document.getElementById('resultsSection').style.display = 'block';
             document.getElementById('summaryCards').innerHTML = '';
             document.getElementById('riskBanner').innerHTML = `<span style="color:#ff0055">&#9888; Error: ${msg}</span>`;
             document.getElementById('detailSections').innerHTML = '';
             document.getElementById('findingsList').innerHTML = '';
             document.getElementById('actionsBar').innerHTML = '';
+            document.getElementById('scanAnotherBox').classList.add('show');
+            showToast('❌ ' + msg, 4000);
         }
 
         function getRiskColor(level) {
@@ -587,9 +914,14 @@
 
         function renderResults(data) {
             document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('skeletonContainer').classList.remove('show');
             document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('scanAnotherBox').classList.add('show');
+            document.getElementById('stickyDownload').classList.add('show');
 
-            // Summary Cards
+            currentScanId = data.scan_id;
+            showToast('✅ Scan complete! ' + data.total_findings + ' findings');
+
             const riskColor = getRiskColor(data.risk_level);
             document.getElementById('summaryCards').innerHTML = `
                 <div class="summary-card"><div class="num" style="color:#ff0040">${data.stats.critical}</div><div class="lbl">Critical</div></div>
@@ -605,65 +937,53 @@
                     <span style="margin-left:12px;color:#888;">Max CVSS: ${data.max_cvss}</span>
                 </div>
                 <div class="scan-meta">
-                    ${data.total_findings} findings &bull; ${data.duration_seconds}s &bull; ${data.paths_checked || '100+' } paths checked
+                    ${data.total_findings} findings &bull; ${data.duration_seconds}s &bull; ${data.paths_checked || '100+'} paths checked
                 </div>
             `;
 
             document.getElementById('actionsBar').innerHTML = `
                 <a class="action-btn" href="/report/${data.scan_id}" target="_blank">&#128196; HTML Report</a>
                 <a class="action-btn" href="/report/${data.scan_id}/json" target="_blank">&#128190; JSON Export</a>
-                <a class="action-btn" href="/scan/${data.scan_id}/details" target="_blank">&#128203; Full Details API</a>
-                <button class="action-btn" onclick="downloadReport('${data.scan_id}')">&#11015; Download Report</button>
+                <a class="action-btn" href="/scan/${data.scan_id}/details" target="_blank">&#128203; Full Details</a>
+                <button class="action-btn primary" onclick="downloadReport('${data.scan_id}')">&#11015; Download Report</button>
             `;
 
-            // Build detail sections
             let sections = '';
             const details = data.details || {};
 
-            // Exposed Files
             const exposedFiles = details.exposed_files || [];
             const exposed200 = exposedFiles.filter(f => f.status === 200);
             const exposed403 = exposedFiles.filter(f => f.status === 403);
             sections += buildAccordion('&#128194; Exposed Files', `${exposed200.length} accessible, ${exposed403.length} forbidden`, renderExposedFiles(exposed200, exposed403));
 
-            // Security Headers
             sections += buildAccordion('&#128737; Security Headers', '', renderHeadersTable(details.headers_detail || {}));
 
-            // Technology Stack
             const techList = details.tech_list || [];
             sections += buildAccordion('&#9881; Technology Stack', `${techList.length} detected`, renderTechStack(techList, details.tech_detail || {}));
 
-            // SSL Info
             sections += buildAccordion('&#128274; SSL/TLS Certificate', '', renderSSL(details.ssl_detail || {}));
 
-            // Emails
             const emails = details.emails || [];
             sections += buildAccordion('&#128231; Emails Found', `${emails.length}`, renderEmails(emails));
 
-            // Forms
             const forms = details.forms || [];
             sections += buildAccordion('&#128221; Form Analysis', `${forms.length} forms`, renderForms(forms));
 
-            // Ports
             const ports = details.open_ports || [];
             sections += buildAccordion('&#128268; Open Ports', `${ports.length} open`, renderPorts(ports));
 
-            // Social Media
             const social = details.social_links || {};
             const socialCount = Object.keys(social).length;
             sections += buildAccordion('&#127760; Social Media', `${socialCount} platforms`, renderSocial(social));
 
-            // External Domains
             const extDomains = details.external_domains || [];
             sections += buildAccordion('&#128279; External Resources', `${extDomains.length} domains`, renderExternal(extDomains));
 
-            // JavaScript
             const jsFiles = details.javascript || [];
             sections += buildAccordion('&#128220; JavaScript Files', `${jsFiles.length} scripts`, renderJS(jsFiles));
 
             document.getElementById('detailSections').innerHTML = sections;
 
-            // All Findings
             document.getElementById('findingsCount').textContent = data.total_findings;
             let html = '';
             for (const f of data.findings) {
@@ -674,12 +994,16 @@
                         <span class="cvss-tag">CVSS ${f.cvss_score}</span>
                         <span class="category-tag">${f.category || ''}</span>
                     </div>
-                    <div class="finding-title">${f.title}</div>
+                    <div class="finding-title">${escapeHtml(f.title)}</div>
                     <div class="finding-desc">${escapeHtml(f.description)}</div>
                     <div class="finding-fix"><strong>Fix:</strong> ${escapeHtml(f.recommendation)}</div>
                 </div>`;
             }
             document.getElementById('findingsList').innerHTML = html;
+
+            setTimeout(() => {
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
 
         function escapeHtml(str) {
@@ -694,7 +1018,9 @@
                     <h3>${title} ${badge ? `<span class="badge">${badge}</span>` : ''}</h3>
                     <span class="arrow">&#9660;</span>
                 </div>
-                <div class="section-content">${content}</div>
+                <div class="section-content">
+                    <div class="section-content-inner">${content}</div>
+                </div>
             </div>`;
         }
 
@@ -704,7 +1030,11 @@
             if (exposed200.length) {
                 html += '<h4 style="color:#ff4444;margin-bottom:8px;">&#9888; Accessible (HTTP 200)</h4><ul class="detail-list">';
                 for (const f of exposed200) {
-                    html += `<li><span style="color:${f.severity==='high'?'#ff4444':'#ffaa00'}">[${f.severity.toUpperCase()}]</span> <a href="${escapeHtml(f.url)}" target="_blank" style="color:#00ff88;">${escapeHtml(f.path)}</a></li>`;
+                    html += `<li>
+                        <span style="color:${f.severity==='high'?'#ff4444':'#ffaa00'}">[${f.severity.toUpperCase()}]</span>
+                        <a href="${escapeHtml(f.url)}" target="_blank" style="color:#00ff88;flex:1;min-width:0;word-break:break-all;">${escapeHtml(f.path)}</a>
+                        <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(f.url)}', this)">Copy</button>
+                    </li>`;
                 }
                 html += '</ul>';
             }
@@ -720,7 +1050,7 @@
 
         function renderHeadersTable(headers) {
             if (!Object.keys(headers).length) return '<p class="no-data">No header data available.</p>';
-            let html = '<table class="headers-table"><tr><th>Header</th><th>Status</th><th>Expected Value</th><th>Actual Value</th></tr>';
+            let html = '<div class="table-wrapper"><table class="headers-table"><tr><th>Header</th><th>Status</th><th>Expected</th><th>Actual</th></tr>';
             for (const [name, info] of Object.entries(headers)) {
                 const icon = info.present ? '<span class="check-icon">&#10004;</span>' : '<span class="cross-icon">&#10008;</span>';
                 html += `<tr>
@@ -730,7 +1060,7 @@
                     <td style="color:${info.present ? '#00ff88' : '#ff4444'};font-family:monospace;font-size:11px;">${info.present ? escapeHtml(info.actual || 'Set') : 'Missing'}</td>
                 </tr>`;
             }
-            html += '</table>';
+            html += '</table></div>';
             return html;
         }
 
@@ -757,20 +1087,20 @@
             let html = '<div class="ssl-grid">';
             const items = [
                 ['Status', ssl.valid ? '&#10004; Valid' : '&#10008; Invalid', ssl.valid ? '#00ff88' : '#ff4444'],
-                ['Days Remaining', String(ssl.days_remaining || 'N/A'), ssl.days_remaining > 30 ? '#00ff88' : '#ff4444'],
+                ['Days Left', String(ssl.days_remaining || 'N/A'), ssl.days_remaining > 30 ? '#00ff88' : '#ff4444'],
                 ['Expires', ssl.expires || 'N/A', '#fff'],
                 ['Issued', ssl.issued || 'N/A', '#fff'],
                 ['Issuer', ssl.issuer || 'N/A', '#fff'],
                 ['Subject', ssl.subject || 'N/A', '#fff'],
                 ['Protocol', ssl.protocol || 'N/A', '#00ff88'],
-                ['Deprecated TLS', ssl.deprecated_tls ? 'YES &#9888;' : 'No', ssl.deprecated_tls ? '#ff4444' : '#00ff88'],
+                ['Old TLS', ssl.deprecated_tls ? 'YES &#9888;' : 'No', ssl.deprecated_tls ? '#ff4444' : '#00ff88'],
             ];
             for (const [label, value, color] of items) {
                 html += `<div class="ssl-item"><div class="label">${label}</div><div class="value" style="color:${color}">${value}</div></div>`;
             }
             html += '</div>';
             if (ssl.sans && ssl.sans.length) {
-                html += `<div style="margin-top:12px;"><strong style="color:#666;font-size:12px;">Subject Alternative Names:</strong><div style="font-size:12px;color:#888;margin-top:4px;">${ssl.sans.join(', ')}</div></div>`;
+                html += `<div style="margin-top:12px;"><strong style="color:#666;font-size:12px;">SANs:</strong><div style="font-size:12px;color:#888;margin-top:4px;word-break:break-all;">${ssl.sans.join(', ')}</div></div>`;
             }
             return html;
         }
@@ -779,7 +1109,7 @@
             if (!emails.length) return '<p class="no-data">No email addresses found in page source.</p>';
             let html = '<ul class="detail-list">';
             for (const e of emails) {
-                html += `<li>&#128231; ${escapeHtml(e)}</li>`;
+                html += `<li>&#128231; <span style="flex:1;min-width:0;">${escapeHtml(e)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(e)}', this)">Copy</button></li>`;
             }
             html += '</ul>';
             return html;
@@ -818,7 +1148,11 @@
             let html = '<ul class="detail-list">';
             for (const [platform, links] of Object.entries(social)) {
                 for (const link of links) {
-                    html += `<li><strong style="color:#00ff88;">${platform}:</strong> <a href="${escapeHtml(link)}" target="_blank" style="color:#888;">${escapeHtml(link)}</a></li>`;
+                    html += `<li>
+                        <strong style="color:#00ff88;">${platform}:</strong>
+                        <a href="${escapeHtml(link)}" target="_blank" style="color:#888;flex:1;min-width:0;word-break:break-all;">${escapeHtml(link)}</a>
+                        <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(link)}', this)">Copy</button>
+                    </li>`;
                 }
             }
             html += '</ul>';
@@ -827,7 +1161,7 @@
 
         function renderExternal(domains) {
             if (!domains.length) return '<p class="no-data">No external domains detected.</p>';
-            let html = `<p style="color:#888;font-size:12px;margin-bottom:10px;">${domains.length} external domains loading resources on this page:</p>`;
+            let html = `<p style="color:#888;font-size:12px;margin-bottom:10px;">${domains.length} external domains loading resources:</p>`;
             html += '<div class="tech-tags">';
             for (const d of domains) {
                 html += `<span class="tech-tag" style="color:#888;border-color:#333;">${escapeHtml(d)}</span>`;
@@ -845,7 +1179,7 @@
                     issues = ' <span style="color:#ff4444;">(' + js.issues.join(', ') + ')</span>';
                 }
                 const icon = js.external ? '&#127760;' : '&#128196;';
-                html += `<li>${icon} <span style="color:#ccc;word-break:break-all;">${escapeHtml(js.src)}</span>${issues}</li>`;
+                html += `<li>${icon} <span style="flex:1;min-width:0;word-break:break-all;color:#ccc;">${escapeHtml(js.src)}</span>${issues}<button class="copy-btn" onclick="copyToClipboard('${escapeHtml(js.src)}', this)">Copy</button></li>`;
             }
             html += '</ul>';
             return html;
@@ -861,7 +1195,12 @@
                     a.download = `vulnscan-report-${scanId}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
+                    showToast('📥 Report downloaded');
                 });
+        }
+
+        function downloadCurrentReport() {
+            if (currentScanId) downloadReport(currentScanId);
         }
     </script>
 </body>
