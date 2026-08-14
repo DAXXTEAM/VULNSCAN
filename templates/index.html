@@ -342,7 +342,7 @@
             border-top: 1px solid transparent;
         }
         .section-content.open {
-            max-height: 3000px;
+            max-height: 5000px;
             border-top-color: #1a1a3a;
         }
         .section-content-inner {
@@ -449,6 +449,34 @@
             word-break: break-all;
         }
 
+        /* Info Grid - for new modules */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .info-item {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .info-item .label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .info-item .value {
+            font-size: 13px;
+            color: #fff;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .info-item .value.good { color: #00ff88; }
+        .info-item .value.warn { color: #ffaa00; }
+        .info-item .value.bad { color: #ff4444; }
+
         /* Forms */
         .form-card {
             background: #111;
@@ -483,6 +511,10 @@
             font-size: 13px;
             color: #00ff88;
             font-family: monospace;
+        }
+        .port-badge.danger {
+            border-color: #ff4444;
+            color: #ff4444;
         }
 
         /* Findings */
@@ -605,48 +637,71 @@
             color: #000;
         }
 
-        /* ===== RESPONSIVE ===== */
+        /* Subdomain list */
+        .subdomain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 8px;
+        }
+        .subdomain-item {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-family: monospace;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .subdomain-item .sub-name { color: #00ff88; }
+        .subdomain-item .sub-ip { color: #666; }
 
-        /* Tablet */
+        /* Social presence */
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .social-item {
+            background: #111;
+            border: 1px solid #1a1a3a;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .social-item .platform { color: #fff; font-weight: bold; text-transform: capitalize; font-size: 13px; }
+        .social-item .status-dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .social-item .status-dot.found { background: #00ff88; }
+        .social-item .status-dot.not-found { background: #ff4444; }
+
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 900px) {
             .summary-cards { grid-template-columns: repeat(3, 1fr); }
             .ssl-grid { grid-template-columns: repeat(2, 1fr); }
+            .info-grid { grid-template-columns: repeat(2, 1fr); }
             .skeleton-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
-        /* Mobile */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 32px;
-                letter-spacing: 3px;
-            }
+            .header h1 { font-size: 32px; letter-spacing: 3px; }
             .header p { font-size: 10px; letter-spacing: 1px; }
             .header { padding: 12px 16px; }
             .container { padding: 16px 12px; padding-bottom: 80px; }
             .scan-box { padding: 16px; }
-            .input-group {
-                flex-direction: column;
-            }
-            .scan-btn {
-                width: 100%;
-                padding: 14px;
-            }
+            .input-group { flex-direction: column; }
+            .scan-btn { width: 100%; padding: 14px; }
             .url-input { padding: 14px; font-size: 14px; }
-            .summary-cards {
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-            }
+            .summary-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
             .summary-card { padding: 14px 8px; }
             .summary-card .num { font-size: 24px; }
             .summary-card .lbl { font-size: 9px; }
-            .risk-banner {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 12px 16px;
-            }
-            .actions-bar {
-                flex-direction: column;
-            }
+            .risk-banner { flex-direction: column; align-items: flex-start; padding: 12px 16px; }
+            .actions-bar { flex-direction: column; }
             .action-btn { width: 100%; justify-content: center; padding: 12px; }
             .section-header { padding: 12px 14px; }
             .section-header h3 { font-size: 13px; gap: 6px; }
@@ -655,14 +710,16 @@
             .finding-title { font-size: 13px; }
             .finding-desc { font-size: 12px; }
             .ssl-grid { grid-template-columns: 1fr; }
+            .info-grid { grid-template-columns: 1fr; }
             .skeleton-grid { grid-template-columns: 1fr 1fr; }
             .toast { right: 12px; left: 12px; top: 12px; }
             .progress-bar-container { padding: 16px; }
             .sticky-download { padding: 10px 12px; }
             .sticky-download .action-btn { font-size: 12px; padding: 10px 14px; flex: 1; }
+            .subdomain-grid { grid-template-columns: 1fr; }
+            .social-grid { grid-template-columns: 1fr; }
         }
 
-        /* Small Mobile */
         @media (max-width: 400px) {
             .header h1 { font-size: 26px; letter-spacing: 2px; }
             .summary-cards { grid-template-columns: 1fr 1fr; }
@@ -679,7 +736,7 @@
     <!-- Sticky Header -->
     <div class="header">
         <h1>VULNSCAN</h1>
-        <p>Web Security Scanner &bull; 15 Modules &bull; 100+ Checks</p>
+        <p>Web Security Scanner &bull; 24 Modules &bull; 150+ Checks</p>
     </div>
 
     <div class="container">
@@ -781,10 +838,7 @@
             navigator.clipboard.writeText(text).then(() => {
                 btn.textContent = '✓';
                 btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = 'Copy';
-                    btn.classList.remove('copied');
-                }, 1500);
+                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
             }).catch(() => {
                 const ta = document.createElement('textarea');
                 ta.value = text;
@@ -828,14 +882,17 @@
             document.getElementById('stickyDownload').classList.remove('show');
 
             const steps = [
-                'Resolving target...', 'Checking SSL/TLS certificates...',
-                'Analyzing security headers...', 'Detecting technology stack...',
+                'Resolving target & WHOIS...', 'Checking SSL/TLS certificates...',
+                'Analyzing security headers...', 'Detecting technology stack & CMS...',
                 'Scanning 100+ exposed file paths...', 'Querying DNS records...',
                 'Checking robots.txt...', 'Analyzing cookies & CORS...',
-                'Scanning ports...', 'Harvesting emails...',
-                'Finding social media links...', 'Analyzing forms...',
-                'Checking JavaScript files...', 'Analyzing external resources...',
-                'Finalizing comprehensive report...'
+                'Port scanning (21 ports)...', 'Harvesting emails...',
+                'Enumerating subdomains...', 'Analyzing page content...',
+                'Checking performance & CDN...', 'Verifying email security (SPF/DMARC)...',
+                'Testing HTTP methods...', 'Checking social media presence...',
+                'Querying Wayback Machine...', 'IP geolocation lookup...',
+                'Analyzing JavaScript files...', 'Checking external resources...',
+                'Analyzing forms...', 'Finalizing comprehensive report...'
             ];
 
             let step = 0;
@@ -845,7 +902,7 @@
                     document.getElementById('progressFill').style.width = ((step + 1) / steps.length * 90) + '%';
                     step++;
                 }
-            }, 2000);
+            }, 2500);
 
             try {
                 const response = await fetch('/scan', {
@@ -878,7 +935,7 @@
         }
 
         async function pollForResults(scanId) {
-            for (let i = 0; i < 45; i++) {
+            for (let i = 0; i < 60; i++) {
                 await new Promise(r => setTimeout(r, 2000));
                 const resp = await fetch(`/scan/${scanId}/status`);
                 const data = await resp.json();
@@ -920,7 +977,7 @@
             document.getElementById('stickyDownload').classList.add('show');
 
             currentScanId = data.scan_id;
-            showToast('✅ Scan complete! ' + data.total_findings + ' findings');
+            showToast('✅ Scan complete! ' + data.total_findings + ' findings (' + (data.modules_count || 24) + ' modules)');
 
             const riskColor = getRiskColor(data.risk_level);
             document.getElementById('summaryCards').innerHTML = `
@@ -934,7 +991,7 @@
             document.getElementById('riskBanner').innerHTML = `
                 <div>
                     <span class="risk-badge" style="background:${riskColor};color:#fff">${data.risk_level}</span>
-                    <span style="margin-left:12px;color:#888;">Max CVSS: ${data.max_cvss}</span>
+                    <span style="margin-left:12px;color:#888;">Max CVSS: ${data.max_cvss} | ${data.modules_count || 24} modules</span>
                 </div>
                 <div class="scan-meta">
                     ${data.total_findings} findings &bull; ${data.duration_seconds}s &bull; ${data.paths_checked || '100+'} paths checked
@@ -951,34 +1008,81 @@
             let sections = '';
             const details = data.details || {};
 
+            // Domain Intelligence (WHOIS)
+            const whois = details.whois_detail || {};
+            sections += buildAccordion('&#127760; Domain Intelligence', whois.registrar ? whois.registrar : '', renderWhois(whois));
+
+            // IP & Location
+            const geo = details.geo_detail || {};
+            sections += buildAccordion('&#128205; IP & Location', geo.ip || '', renderGeo(geo));
+
+            // Open Ports (enhanced)
+            const ports = details.open_ports || [];
+            sections += buildAccordion('&#128268; Open Ports', `${ports.length} open`, renderPorts(ports));
+
+            // Subdomains
+            const subdomains = details.subdomains || [];
+            sections += buildAccordion('&#128269; Subdomains', `${subdomains.length} found`, renderSubdomains(subdomains));
+
+            // Content Analysis
+            const content = details.content_detail || {};
+            sections += buildAccordion('&#128196; Content Analysis', content.title ? `"${content.title.substring(0, 40)}..."` : '', renderContent(content));
+
+            // Performance
+            const perf = details.performance_detail || {};
+            sections += buildAccordion('&#9889; Performance', perf.load_time_seconds ? `${perf.load_time_seconds}s` : '', renderPerformance(perf));
+
+            // Email Security
+            const emailSec = details.email_security || {};
+            sections += buildAccordion('&#128231; Email Security', '', renderEmailSecurity(emailSec));
+
+            // Archive History
+            const wayback = details.wayback_detail || {};
+            sections += buildAccordion('&#128218; Archive History', wayback.available ? 'Archived' : 'Not found', renderWayback(wayback));
+
+            // Social Presence
+            const socialPresence = details.social_presence || {};
+            const presenceCount = Object.values(socialPresence).filter(v => v.exists).length;
+            sections += buildAccordion('&#128100; Social Presence', `${presenceCount}/${Object.keys(socialPresence).length}`, renderSocialPresence(socialPresence));
+
+            // HTTP Methods
+            const httpMethods = details.http_methods || [];
+            sections += buildAccordion('&#128295; HTTP Methods', httpMethods.length ? `${httpMethods.length} allowed` : 'Restricted', renderHTTPMethods(httpMethods));
+
+            // Exposed Files
             const exposedFiles = details.exposed_files || [];
             const exposed200 = exposedFiles.filter(f => f.status === 200);
             const exposed403 = exposedFiles.filter(f => f.status === 403);
             sections += buildAccordion('&#128194; Exposed Files', `${exposed200.length} accessible, ${exposed403.length} forbidden`, renderExposedFiles(exposed200, exposed403));
 
+            // Security Headers
             sections += buildAccordion('&#128737; Security Headers', '', renderHeadersTable(details.headers_detail || {}));
 
+            // Technology Stack
             const techList = details.tech_list || [];
             sections += buildAccordion('&#9881; Technology Stack', `${techList.length} detected`, renderTechStack(techList, details.tech_detail || {}));
 
+            // SSL/TLS
             sections += buildAccordion('&#128274; SSL/TLS Certificate', '', renderSSL(details.ssl_detail || {}));
 
+            // Emails Found
             const emails = details.emails || [];
-            sections += buildAccordion('&#128231; Emails Found', `${emails.length}`, renderEmails(emails));
+            sections += buildAccordion('&#128231; Emails Harvested', `${emails.length}`, renderEmails(emails));
 
+            // Form Analysis
             const forms = details.forms || [];
             sections += buildAccordion('&#128221; Form Analysis', `${forms.length} forms`, renderForms(forms));
 
-            const ports = details.open_ports || [];
-            sections += buildAccordion('&#128268; Open Ports', `${ports.length} open`, renderPorts(ports));
-
+            // Social Media Links (from page)
             const social = details.social_links || {};
             const socialCount = Object.keys(social).length;
-            sections += buildAccordion('&#127760; Social Media', `${socialCount} platforms`, renderSocial(social));
+            sections += buildAccordion('&#127760; Social Media Links', `${socialCount} platforms`, renderSocial(social));
 
+            // External Resources
             const extDomains = details.external_domains || [];
             sections += buildAccordion('&#128279; External Resources', `${extDomains.length} domains`, renderExternal(extDomains));
 
+            // JavaScript
             const jsFiles = details.javascript || [];
             sections += buildAccordion('&#128220; JavaScript Files', `${jsFiles.length} scripts`, renderJS(jsFiles));
 
@@ -1015,7 +1119,7 @@
             return `
             <div class="section-accordion">
                 <div class="section-header" onclick="toggleSection(this)">
-                    <h3>${title} ${badge ? `<span class="badge">${badge}</span>` : ''}</h3>
+                    <h3>${title} ${badge ? `<span class="badge">${escapeHtml(badge)}</span>` : ''}</h3>
                     <span class="arrow">&#9660;</span>
                 </div>
                 <div class="section-content">
@@ -1023,6 +1127,191 @@
                 </div>
             </div>`;
         }
+
+        // ===== NEW RENDER FUNCTIONS =====
+
+        function renderWhois(whois) {
+            if (!Object.keys(whois).length || whois.registrar === 'N/A' && !whois.created) return '<p class="no-data">WHOIS data not available for this domain.</p>';
+            let html = '<div class="info-grid">';
+            const items = [
+                ['Registrar', whois.registrar || 'N/A'],
+                ['Created', whois.created || 'N/A'],
+                ['Expires', whois.expires || 'N/A'],
+                ['Updated', whois.updated || 'N/A'],
+                ['Domain Age', whois.domain_age || 'N/A'],
+                ['Days to Expire', whois.days_to_expire !== undefined ? String(whois.days_to_expire) : 'N/A'],
+                ['Organization', whois.org || 'N/A'],
+                ['Country', whois.country || 'N/A'],
+            ];
+            for (const [label, value] of items) {
+                let cls = '';
+                if (label === 'Days to Expire') {
+                    const d = parseInt(value);
+                    if (!isNaN(d)) cls = d < 30 ? 'bad' : d < 90 ? 'warn' : 'good';
+                }
+                html += `<div class="info-item"><div class="label">${label}</div><div class="value ${cls}">${escapeHtml(value)}</div></div>`;
+            }
+            html += '</div>';
+            if (whois.name_servers && whois.name_servers.length) {
+                html += `<div style="margin-top:12px;"><strong style="color:#666;font-size:11px;">NAME SERVERS:</strong><div style="margin-top:4px;font-size:12px;color:#888;">${whois.name_servers.join(', ')}</div></div>`;
+            }
+            return html;
+        }
+
+        function renderGeo(geo) {
+            if (!geo.ip) return '<p class="no-data">IP geolocation data not available.</p>';
+            let html = '<div class="info-grid">';
+            const items = [
+                ['IP Address', geo.ip],
+                ['Country', geo.country || 'N/A'],
+                ['Region', geo.region || 'N/A'],
+                ['City', geo.city || 'N/A'],
+                ['ISP', geo.isp || 'N/A'],
+                ['Organization', geo.org || 'N/A'],
+                ['AS Number', geo.as || 'N/A'],
+                ['Coordinates', geo.lat && geo.lon ? `${geo.lat}, ${geo.lon}` : 'N/A'],
+            ];
+            for (const [label, value] of items) {
+                html += `<div class="info-item"><div class="label">${label}</div><div class="value">${escapeHtml(String(value))}</div></div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderSubdomains(subdomains) {
+            if (!subdomains.length) return '<p class="no-data">No subdomains found from common prefixes scan.</p>';
+            let html = `<p style="color:#888;font-size:12px;margin-bottom:12px;">${subdomains.length} subdomains discovered:</p>`;
+            html += '<div class="subdomain-grid">';
+            for (const s of subdomains) {
+                html += `<div class="subdomain-item"><span class="sub-name">${escapeHtml(s.subdomain)}</span><span class="sub-ip">${escapeHtml(s.ip)}</span></div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderContent(content) {
+            if (!Object.keys(content).length) return '<p class="no-data">Content analysis data not available.</p>';
+            let html = '<div class="info-grid">';
+            const items = [
+                ['Title', content.title || '(No title)'],
+                ['Word Count', String(content.word_count || 0)],
+                ['Page Size', `${content.page_size_kb || 0} KB`],
+                ['Total Links', String(content.total_links || 0)],
+                ['Internal Links', String(content.internal_links || 0)],
+                ['External Links', String(content.external_links || 0)],
+                ['Images', String(content.images || 0)],
+                ['Scripts', String(content.scripts || 0)],
+            ];
+            for (const [label, value] of items) {
+                html += `<div class="info-item"><div class="label">${label}</div><div class="value">${escapeHtml(value)}</div></div>`;
+            }
+            html += '</div>';
+            if (content.meta_description) {
+                html += `<div style="margin-top:12px;"><strong style="color:#666;font-size:11px;">META DESCRIPTION:</strong><div style="margin-top:4px;font-size:12px;color:#999;">${escapeHtml(content.meta_description)}</div></div>`;
+            }
+            if (content.h1_tags && content.h1_tags.length) {
+                html += `<div style="margin-top:10px;"><strong style="color:#666;font-size:11px;">H1 TAGS:</strong><div style="margin-top:4px;font-size:12px;color:#888;">${content.h1_tags.map(h => escapeHtml(h)).join(' | ')}</div></div>`;
+            }
+            if (content.contact_emails && content.contact_emails.length) {
+                html += `<div style="margin-top:10px;"><strong style="color:#666;font-size:11px;">CONTACT EMAILS:</strong><div style="margin-top:4px;font-size:12px;color:#00ff88;">${content.contact_emails.join(', ')}</div></div>`;
+            }
+            if (content.phone_numbers && content.phone_numbers.length) {
+                html += `<div style="margin-top:10px;"><strong style="color:#666;font-size:11px;">PHONE NUMBERS:</strong><div style="margin-top:4px;font-size:12px;color:#00ff88;">${content.phone_numbers.join(', ')}</div></div>`;
+            }
+            return html;
+        }
+
+        function renderPerformance(perf) {
+            if (!Object.keys(perf).length) return '<p class="no-data">Performance data not available.</p>';
+            let timeClass = perf.load_time_seconds < 2 ? 'good' : perf.load_time_seconds < 5 ? 'warn' : 'bad';
+            let html = '<div class="info-grid">';
+            const items = [
+                ['Load Time', `${perf.load_time_seconds}s`, timeClass],
+                ['Response Size', `${perf.response_size_kb} KB`, ''],
+                ['Status Code', String(perf.status_code || 'N/A'), perf.status_code === 200 ? 'good' : 'warn'],
+                ['CDN Detected', perf.cdn_detected ? `Yes (${perf.cdn_provider || 'Unknown'})` : 'No', perf.cdn_detected ? 'good' : ''],
+                ['Cache Control', perf.cache_control || 'None', perf.cache_control && perf.cache_control !== 'None' ? 'good' : 'warn'],
+                ['Compression', perf.content_encoding || 'None', perf.content_encoding && perf.content_encoding !== 'None' ? 'good' : 'warn'],
+            ];
+            for (const [label, value, cls] of items) {
+                html += `<div class="info-item"><div class="label">${label}</div><div class="value ${cls}">${escapeHtml(value)}</div></div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderEmailSecurity(emailSec) {
+            if (!Object.keys(emailSec).length) return '<p class="no-data">Email security data not available.</p>';
+            let html = '<div class="info-grid">';
+            const spfStatus = emailSec.spf ? 'Configured' : 'Missing';
+            const dmarcStatus = emailSec.dmarc ? 'Configured' : 'Missing';
+            const items = [
+                ['SPF Record', spfStatus, emailSec.spf ? 'good' : 'bad'],
+                ['DMARC Record', dmarcStatus, emailSec.dmarc ? 'good' : 'bad'],
+                ['MX Records', emailSec.mx_records ? `${emailSec.mx_records.length} found` : 'None', emailSec.mx_records && emailSec.mx_records.length ? 'good' : ''],
+            ];
+            for (const [label, value, cls] of items) {
+                html += `<div class="info-item"><div class="label">${label}</div><div class="value ${cls}">${escapeHtml(value)}</div></div>`;
+            }
+            html += '</div>';
+            if (emailSec.spf) {
+                html += `<div style="margin-top:12px;"><strong style="color:#666;font-size:11px;">SPF:</strong><div style="margin-top:4px;font-size:11px;color:#00ff88;font-family:monospace;word-break:break-all;">${escapeHtml(emailSec.spf)}</div></div>`;
+            }
+            if (emailSec.dmarc) {
+                html += `<div style="margin-top:10px;"><strong style="color:#666;font-size:11px;">DMARC:</strong><div style="margin-top:4px;font-size:11px;color:#00ff88;font-family:monospace;word-break:break-all;">${escapeHtml(emailSec.dmarc)}</div></div>`;
+            }
+            if (emailSec.mx_records && emailSec.mx_records.length) {
+                html += `<div style="margin-top:10px;"><strong style="color:#666;font-size:11px;">MX RECORDS:</strong><div style="margin-top:4px;font-size:11px;color:#888;font-family:monospace;">${emailSec.mx_records.join('<br>')}</div></div>`;
+            }
+            return html;
+        }
+
+        function renderWayback(wayback) {
+            if (!Object.keys(wayback).length) return '<p class="no-data">Wayback Machine data not available.</p>';
+            if (!wayback.available) return '<p class="no-data">No archived snapshots found on the Wayback Machine.</p>';
+            let ts = wayback.timestamp || '';
+            let formatted = ts.length >= 8 ? `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}` : ts;
+            let html = '<div class="info-grid">';
+            html += `<div class="info-item"><div class="label">Status</div><div class="value good">Archived</div></div>`;
+            html += `<div class="info-item"><div class="label">Last Snapshot</div><div class="value">${escapeHtml(formatted)}</div></div>`;
+            html += '</div>';
+            if (wayback.url) {
+                html += `<div style="margin-top:12px;"><a href="${escapeHtml(wayback.url)}" target="_blank" style="color:#00ff88;font-size:12px;">View on Wayback Machine →</a></div>`;
+            }
+            return html;
+        }
+
+        function renderSocialPresence(presence) {
+            if (!Object.keys(presence).length) return '<p class="no-data">Social media presence check not available.</p>';
+            let html = '<div class="social-grid">';
+            for (const [platform, info] of Object.entries(presence)) {
+                const dotClass = info.exists ? 'found' : 'not-found';
+                const statusText = info.exists ? 'Found' : 'Not found';
+                html += `<div class="social-item">
+                    <span class="status-dot ${dotClass}"></span>
+                    <div>
+                        <div class="platform">${platform}</div>
+                        <div style="font-size:11px;color:#666;">${statusText}</div>
+                    </div>
+                    ${info.exists ? `<a href="${escapeHtml(info.url)}" target="_blank" style="color:#00ff88;font-size:11px;margin-left:auto;">Visit</a>` : ''}
+                </div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderHTTPMethods(methods) {
+            if (!methods.length) return '<p style="color:#00ff88;font-size:13px;">&#10004; All dangerous HTTP methods are properly restricted (TRACE, TRACK, PUT, DELETE, PATCH, OPTIONS return 405/501).</p>';
+            let html = '<div class="port-badges">';
+            for (const m of methods) {
+                const isDangerous = ['TRACE', 'TRACK', 'PUT', 'DELETE'].includes(m.method);
+                html += `<span class="port-badge ${isDangerous ? 'danger' : ''}">${m.method} (${m.status})</span>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        // ===== EXISTING RENDER FUNCTIONS =====
 
         function renderExposedFiles(exposed200, exposed403) {
             if (!exposed200.length && !exposed403.length) return '<p class="no-data">No exposed files found. All 100+ paths returned 404.</p>';
@@ -1134,17 +1423,19 @@
         }
 
         function renderPorts(ports) {
-            if (!ports.length) return '<p class="no-data">No open ports detected from common web ports scan.</p>';
+            if (!ports.length) return '<p class="no-data">No open ports detected (scanned 21 common ports).</p>';
             let html = '<div class="port-badges">';
+            const dangerousPorts = [21, 23, 445, 3306, 3389, 5432, 5900, 6379, 9200, 27017, 11211];
             for (const p of ports) {
-                html += `<span class="port-badge">${p}</span>`;
+                const isDangerous = dangerousPorts.includes(p.port);
+                html += `<span class="port-badge ${isDangerous ? 'danger' : ''}">${p.port}/${p.service}</span>`;
             }
             html += '</div>';
             return html;
         }
 
         function renderSocial(social) {
-            if (!Object.keys(social).length) return '<p class="no-data">No social media links found.</p>';
+            if (!Object.keys(social).length) return '<p class="no-data">No social media links found in page source.</p>';
             let html = '<ul class="detail-list">';
             for (const [platform, links] of Object.entries(social)) {
                 for (const link of links) {

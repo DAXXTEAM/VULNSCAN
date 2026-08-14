@@ -103,7 +103,7 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     print("\n" + "=" * 50)
     print("  VULNSCAN - Automated Web Security Scanner")
-    print("  Comprehensive Edition - 15 Check Modules")
+    print("  Comprehensive Edition - 24 Check Modules")
     print("  http://localhost:5000")
     print("=" * 50 + "\n")
     app.run(host="0.0.0.0", port=5000, debug=False)

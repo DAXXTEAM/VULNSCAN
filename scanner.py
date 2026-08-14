@@ -8,10 +8,11 @@ import dns.resolver
 import uuid
 import time
 import re
+import whois
 from datetime import datetime
 from urllib.parse import urlparse, urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from html.parser import HTMLParser
+from bs4 import BeautifulSoup
 
 TIMEOUT = 8
 
@@ -151,6 +152,39 @@ SECURITY_HEADERS = {
 
 COMMON_PORTS = [80, 443, 8080, 8443, 3000, 4000, 5000, 8000, 8888, 9000]
 
+EXTENDED_PORTS = {
+    21: 'FTP', 22: 'SSH', 23: 'Telnet', 25: 'SMTP', 53: 'DNS',
+    80: 'HTTP', 110: 'POP3', 143: 'IMAP', 443: 'HTTPS', 445: 'SMB',
+    3306: 'MySQL', 3389: 'RDP', 5432: 'PostgreSQL', 5900: 'VNC',
+    6379: 'Redis', 8080: 'HTTP-Alt', 8443: 'HTTPS-Alt', 8888: 'Jupyter',
+    9200: 'Elasticsearch', 27017: 'MongoDB', 11211: 'Memcached'
+}
+
+COMMON_SUBDOMAINS = ['www', 'mail', 'ftp', 'admin', 'api', 'dev', 'staging', 'test',
+    'shop', 'blog', 'portal', 'app', 'mobile', 'cdn', 'static', 'media',
+    'vpn', 'remote', 'cpanel', 'whm', 'webmail', 'ns1', 'ns2', 'smtp',
+    'pop', 'imap', 'mx', 'support', 'help', 'docs', 'wiki', 'git', 'gitlab',
+    'jenkins', 'jira', 'confluence', 'grafana', 'kibana', 'monitor']
+
+CMS_SIGNATURES = {
+    'WordPress': ['/wp-content/', '/wp-includes/', 'wp-json'],
+    'Joomla': ['/administrator/', 'Joomla!', '/components/'],
+    'Drupal': ['/sites/default/', 'Drupal.settings', 'drupal.js'],
+    'Magento': ['/skin/frontend/', 'Mage.Cookies', '/magento/'],
+    'Shopify': ['cdn.shopify.com', 'Shopify.theme'],
+    'Wix': ['wix.com', 'wixstatic.com'],
+    'Squarespace': ['squarespace.com', 'static.squarespace.com'],
+    'Next.js': ['__NEXT_DATA__', '_next/static'],
+    'React': ['__react', 'react-root'],
+    'Vue.js': ['__vue__', 'vue-app'],
+    'Angular': ['ng-version', 'angular.js'],
+    'Laravel': ['laravel_session', 'X-Laravel'],
+    'Django': ['csrfmiddlewaretoken', 'django'],
+    'Flask': ['werkzeug', 'Flask'],
+}
+
+DANGEROUS_METHODS = ['TRACE', 'TRACK', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+
 SOCIAL_MEDIA_PATTERNS = {
     'facebook': r'https?://(?:www\.)?facebook\.com/[^\s"\'<>]+',
     'twitter': r'https?://(?:www\.)?(?:twitter|x)\.com/[^\s"\'<>]+',
@@ -247,7 +281,6 @@ def check_ssl_tls(url):
                 issuer = dict(x[0] for x in cert.get('issuer', []))
                 subject = dict(x[0] for x in cert.get('subject', []))
 
-                # Get SANs
                 sans = []
                 for san_type, san_value in cert.get('subjectAltName', []):
                     sans.append(san_value)
@@ -309,7 +342,6 @@ def check_ssl_tls(url):
                 else:
                     ssl_detail["deprecated_tls"] = False
 
-        # Check for TLS 1.0/1.1 support separately
         for old_proto_name, old_proto in [("TLSv1", ssl.PROTOCOL_TLSv1 if hasattr(ssl, 'PROTOCOL_TLSv1') else None),
                                            ("TLSv1.1", ssl.PROTOCOL_TLSv1_1 if hasattr(ssl, 'PROTOCOL_TLSv1_1') else None)]:
             if old_proto is None:
@@ -368,7 +400,6 @@ def check_technology_stack(url):
         body = resp.text[:50000]
         body_lower = body.lower()
 
-        # From headers
         server = headers.get("Server", "")
         if server:
             techs.append(f"Server: {server}")
@@ -378,7 +409,6 @@ def check_technology_stack(url):
         if powered_by:
             techs.append(f"X-Powered-By: {powered_by}")
             tech_detail["powered_by"] = powered_by
-            # Check for PHP version
             php_match = re.search(r'PHP[/ ]?([\d.]+)', powered_by)
             if php_match:
                 tech_detail["php_version"] = php_match.group(1)
@@ -392,70 +422,70 @@ def check_technology_stack(url):
         if via:
             techs.append(f"Via: {via}")
 
-        # Check for Laravel session cookie
         set_cookies = resp.headers.get('Set-Cookie', '')
         if 'laravel_session' in set_cookies.lower():
             techs.append("Framework: Laravel")
             tech_detail["framework"] = "Laravel"
 
-        # CMS Detection
+        # Deep CMS detection using CMS_SIGNATURES
+        detected_cms = []
+        for cms_name, signatures in CMS_SIGNATURES.items():
+            for sig in signatures:
+                if sig.lower() in body_lower or sig.lower() in set_cookies.lower():
+                    if cms_name not in detected_cms:
+                        detected_cms.append(cms_name)
+                    break
+
+        for cms in detected_cms:
+            if cms not in str(techs):
+                techs.append(f"CMS/Framework: {cms}")
+                if "cms" not in tech_detail:
+                    tech_detail["cms"] = cms
+                else:
+                    tech_detail["cms"] = tech_detail["cms"] + ", " + cms
+
+        # Legacy CMS detection (kept for version extraction)
         if "wp-content" in body_lower or "wp-includes" in body_lower:
-            techs.append("CMS: WordPress")
-            tech_detail["cms"] = "WordPress"
-            # Try to get WP version
+            if "WordPress" not in detected_cms:
+                techs.append("CMS: WordPress")
+                tech_detail["cms"] = tech_detail.get("cms", "WordPress")
             wp_ver = re.search(r'content="WordPress ([\d.]+)"', body)
             if wp_ver:
                 tech_detail["cms_version"] = wp_ver.group(1)
-        if "drupal" in body_lower or 'name="Generator" content="Drupal' in body:
-            techs.append("CMS: Drupal")
-            tech_detail["cms"] = "Drupal"
-        if "joomla" in body_lower or "/media/jui/" in body_lower:
-            techs.append("CMS: Joomla")
-            tech_detail["cms"] = "Joomla"
 
         # Frontend frameworks
         if "__react" in body_lower or "react-root" in body_lower or "data-reactroot" in body_lower or "_reactRootContainer" in body:
-            techs.append("Frontend: React")
-            tech_detail["frontend_framework"] = "React"
+            if "React" not in str(techs):
+                techs.append("Frontend: React")
+                tech_detail["frontend_framework"] = "React"
         if "__vue" in body_lower or "data-v-" in body or 'id="app"' in body_lower:
             vue_check = re.search(r'vue[/@]([\d.]+)', body_lower)
-            techs.append("Frontend: Vue.js")
-            tech_detail["frontend_framework"] = "Vue.js"
+            if "Vue" not in str(techs):
+                techs.append("Frontend: Vue.js")
+                tech_detail["frontend_framework"] = "Vue.js"
             if vue_check:
                 tech_detail["vue_version"] = vue_check.group(1)
         if "ng-version" in body or "ng-app" in body_lower or "angular" in body_lower:
             ng_ver = re.search(r'ng-version="([\d.]+)"', body)
-            techs.append("Frontend: Angular")
-            tech_detail["frontend_framework"] = "Angular"
+            if "Angular" not in str(techs):
+                techs.append("Frontend: Angular")
+                tech_detail["frontend_framework"] = "Angular"
             if ng_ver:
                 tech_detail["angular_version"] = ng_ver.group(1)
 
-        if "/_next/" in body:
+        if "/_next/" in body and "Next.js" not in str(techs):
             techs.append("Framework: Next.js")
             tech_detail["framework"] = tech_detail.get("framework", "") + " Next.js"
 
-        if "laravel" in body_lower and "framework" not in tech_detail:
-            techs.append("Framework: Laravel")
-            tech_detail["framework"] = "Laravel"
-
-        # jQuery version detection
         jquery_match = re.search(r'jquery[.-]?([\d.]+)(?:\.min)?\.js', body_lower)
         if jquery_match:
             techs.append(f"jQuery: {jquery_match.group(1)}")
             tech_detail["jquery_version"] = jquery_match.group(1)
 
-        # Bootstrap version detection
         bootstrap_match = re.search(r'bootstrap[.-]?([\d.]+)(?:\.min)?\.(?:js|css)', body_lower)
         if bootstrap_match:
             techs.append(f"Bootstrap: {bootstrap_match.group(1)}")
             tech_detail["bootstrap_version"] = bootstrap_match.group(1)
-
-        # PHP version from headers
-        php_header = headers.get("X-Powered-By", "")
-        if "php" in php_header.lower() and "php_version" not in tech_detail:
-            php_v = re.search(r'([\d.]+)', php_header)
-            if php_v:
-                tech_detail["php_version"] = php_v.group(1)
 
         if techs:
             findings.append({
@@ -847,44 +877,58 @@ def check_ports(url):
     open_ports = []
     domain = get_domain(url)
 
-    def check_port(port):
+    def check_port(port_info):
+        port, service = port_info
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(3)
+            sock.settimeout(1.5)
             result = sock.connect_ex((domain, port))
             sock.close()
             if result == 0:
-                return port
+                return {'port': port, 'service': service, 'status': 'open'}
         except:
             pass
         return None
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(check_port, p): p for p in COMMON_PORTS}
+    with ThreadPoolExecutor(max_workers=15) as executor:
+        futures = {executor.submit(check_port, (p, s)): p for p, s in EXTENDED_PORTS.items()}
         for future in as_completed(futures):
-            port = future.result()
-            if port is not None:
-                open_ports.append(port)
+            result = future.result()
+            if result is not None:
+                open_ports.append(result)
 
-    open_ports.sort()
+    open_ports.sort(key=lambda x: x['port'])
 
     if open_ports:
-        non_standard = [p for p in open_ports if p not in (80, 443)]
-        if non_standard:
+        dangerous_ports = [p for p in open_ports if p['port'] in [21, 23, 445, 3306, 3389, 5432, 5900, 6379, 9200, 27017, 11211]]
+        non_standard = [p for p in open_ports if p['port'] not in (80, 443)]
+
+        if dangerous_ports:
+            findings.append({
+                "severity": "high",
+                "cvss_score": 7.5,
+                "title": "Dangerous Ports Open",
+                "description": "High-risk ports detected: " + ", ".join(str(p['port']) + "/" + p['service'] for p in dangerous_ports) + ". These services should not be publicly accessible.",
+                "affected_url": url,
+                "recommendation": "Restrict access to database/admin ports using firewall rules. Only allow from trusted IPs.",
+                "category": "Port Scan"
+            })
+        elif non_standard:
             findings.append({
                 "severity": "medium",
                 "cvss_score": 4.3,
                 "title": "Non-Standard Ports Open",
-                "description": f"Non-standard web ports detected: {', '.join(str(p) for p in non_standard)}. These may expose development/internal services.",
+                "description": "Non-standard ports detected: " + ", ".join(str(p['port']) + "/" + p['service'] for p in non_standard),
                 "affected_url": url,
                 "recommendation": "Review if non-standard ports should be publicly accessible. Use firewall rules to restrict.",
                 "category": "Port Scan"
             })
+
         findings.append({
             "severity": "info",
             "cvss_score": 0.0,
-            "title": "Open Ports Detected",
-            "description": f"Open ports: {', '.join(str(p) for p in open_ports)}",
+            "title": f"Open Ports Detected ({len(open_ports)})",
+            "description": "Open ports: " + ", ".join(str(p['port']) + "/" + p['service'] for p in open_ports),
             "affected_url": url,
             "recommendation": "Ensure only necessary ports are exposed.",
             "category": "Port Scan"
@@ -894,7 +938,7 @@ def check_ports(url):
             "severity": "info",
             "cvss_score": 0.0,
             "title": "Port Scan Complete",
-            "description": "No common web ports responded (checked: " + ', '.join(str(p) for p in COMMON_PORTS) + ")",
+            "description": "No common ports responded (checked: " + ', '.join(f"{p}/{s}" for p, s in EXTENDED_PORTS.items()) + ")",
             "affected_url": url,
             "recommendation": "Standard ports may be filtered by firewall.",
             "category": "Port Scan"
@@ -913,7 +957,6 @@ def check_emails(url):
         email_pattern = re.compile(r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}')
         raw_emails = email_pattern.findall(body)
 
-        # Filter out common false positives
         filtered = set()
         ignore_extensions = ['.png', '.jpg', '.gif', '.css', '.js', '.svg', '.woff']
         for email in raw_emails:
@@ -971,9 +1014,6 @@ def check_social_media(url):
                 social_links[platform] = unique
 
         if social_links:
-            all_links = []
-            for platform, links in social_links.items():
-                all_links.extend([f"{platform}: {link}" for link in links[:2]])
             findings.append({
                 "severity": "info",
                 "cvss_score": 0.0,
@@ -1014,7 +1054,6 @@ def check_external_links(url):
         body = resp.text
         target_domain = get_domain(url)
 
-        # Find all URLs in src and href
         url_pattern = re.compile(r'(?:src|href|action)=["\']?(https?://[^\s"\'<>]+)', re.IGNORECASE)
         all_urls = url_pattern.findall(body)
 
@@ -1069,7 +1108,6 @@ def check_forms(url):
         resp = requests.get(url, timeout=TIMEOUT, allow_redirects=True, verify=False)
         body = resp.text
 
-        # Simple form parser
         form_pattern = re.compile(r'<form[^>]*>(.*?)</form>', re.DOTALL | re.IGNORECASE)
         form_tag_pattern = re.compile(r'<form([^>]*)>', re.IGNORECASE)
         forms = form_pattern.findall(body)
@@ -1078,33 +1116,27 @@ def check_forms(url):
         for i, (form_attrs, form_content) in enumerate(zip(form_tags, forms)):
             form_info = {"index": i + 1, "issues": []}
 
-            # Get action
             action_match = re.search(r'action=["\']([^"\']*)["\']', form_attrs, re.IGNORECASE)
             action = action_match.group(1) if action_match else ""
             form_info["action"] = action
 
-            # Get method
             method_match = re.search(r'method=["\']([^"\']*)["\']', form_attrs, re.IGNORECASE)
             method = method_match.group(1).upper() if method_match else "GET"
             form_info["method"] = method
 
-            # Check for CSRF token
             has_csrf = bool(re.search(r'(csrf|_token|csrfmiddlewaretoken|authenticity_token|__RequestVerificationToken)', form_content, re.IGNORECASE))
             if not has_csrf and method == "POST":
                 form_info["issues"].append("No CSRF token detected")
 
-            # Check HTTP action (not HTTPS)
             if action and action.startswith("http://"):
                 form_info["issues"].append("Form submits over HTTP (not HTTPS)")
 
-            # Check password field with autocomplete
             password_fields = re.findall(r'<input[^>]*type=["\']password["\'][^>]*>', form_content, re.IGNORECASE)
             for pf in password_fields:
                 if 'autocomplete="off"' not in pf.lower() and "autocomplete='off'" not in pf.lower():
                     form_info["issues"].append("Password field with autocomplete enabled")
                     break
 
-            # Check for input types
             input_count = len(re.findall(r'<input', form_content, re.IGNORECASE))
             form_info["input_count"] = input_count
             form_info["has_password"] = bool(password_fields)
@@ -1164,14 +1196,12 @@ def check_javascript(url):
         body = resp.text
         target_domain = get_domain(url)
 
-        # Find all script sources
         script_pattern = re.compile(r'<script[^>]*src=["\']([^"\']+)["\']', re.IGNORECASE)
         scripts = script_pattern.findall(body)
 
         for script_src in scripts:
             js_info = {"src": script_src, "issues": []}
 
-            # Resolve relative URLs
             if script_src.startswith('//'):
                 full_url = 'https:' + script_src
             elif script_src.startswith('/'):
@@ -1181,11 +1211,9 @@ def check_javascript(url):
             else:
                 full_url = script_src
 
-            # Check HTTP (not HTTPS)
             if full_url.startswith('http://'):
                 js_info["issues"].append("Loaded over HTTP (insecure)")
 
-            # Check if from external CDN
             try:
                 script_domain = urlparse(full_url).hostname
                 if script_domain and script_domain != target_domain:
@@ -1203,7 +1231,6 @@ def check_javascript(url):
             except:
                 pass
 
-            # Check for source maps
             if '.min.js' in script_src:
                 js_info["minified"] = True
             else:
@@ -1211,7 +1238,6 @@ def check_javascript(url):
 
             js_detail.append(js_info)
 
-        # Check for exposed source maps
         sourcemap_pattern = re.compile(r'//[#@]\s*sourceMappingURL=([^\s]+)', re.IGNORECASE)
         sourcemaps = sourcemap_pattern.findall(body)
         if sourcemaps:
@@ -1225,7 +1251,6 @@ def check_javascript(url):
                 "category": "JavaScript Analysis"
             })
 
-        # Report issues
         http_scripts = [j for j in js_detail if "Loaded over HTTP (insecure)" in j.get("issues", [])]
         unknown_scripts = [j for j in js_detail if any("unknown domain" in issue for issue in j.get("issues", []))]
 
@@ -1285,6 +1310,651 @@ def check_javascript(url):
     return findings, js_detail
 
 
+# ===================== NEW MODULES =====================
+
+def check_whois_info(url):
+    findings = []
+    whois_detail = {}
+    domain = get_domain(url)
+    base_domain = domain.replace('www.', '')
+    try:
+        w = whois.whois(base_domain)
+        whois_detail = {
+            'registrar': str(w.registrar) if w.registrar else 'N/A',
+            'created': str(w.creation_date) if w.creation_date else 'N/A',
+            'expires': str(w.expiration_date) if w.expiration_date else 'N/A',
+            'updated': str(w.updated_date) if w.updated_date else 'N/A',
+            'name_servers': w.name_servers if w.name_servers else [],
+            'status': w.status if w.status else [],
+            'country': str(w.country) if w.country else 'N/A',
+            'org': str(w.org) if w.org else 'N/A',
+        }
+
+        # Calculate domain age
+        domain_age_str = ''
+        if w.creation_date:
+            created = w.creation_date
+            if isinstance(created, list):
+                created = created[0]
+            age_days = (datetime.utcnow() - created).days
+            domain_age_str = f"{age_days // 365} years, {(age_days % 365) // 30} months"
+            whois_detail['domain_age_days'] = age_days
+            whois_detail['domain_age'] = domain_age_str
+
+        # Calculate expiry countdown
+        if w.expiration_date:
+            expires = w.expiration_date
+            if isinstance(expires, list):
+                expires = expires[0]
+            days_to_expire = (expires - datetime.utcnow()).days
+            whois_detail['days_to_expire'] = days_to_expire
+
+            if days_to_expire < 30:
+                findings.append({
+                    "severity": "high",
+                    "cvss_score": 6.0,
+                    "title": "Domain Expiring Soon",
+                    "description": f"Domain expires in {days_to_expire} days ({expires.strftime('%Y-%m-%d')}). Registrar: {w.registrar}",
+                    "affected_url": url,
+                    "recommendation": "Renew the domain immediately to prevent expiration and potential hijacking.",
+                    "category": "Domain Intelligence"
+                })
+            elif days_to_expire < 90:
+                findings.append({
+                    "severity": "medium",
+                    "cvss_score": 4.0,
+                    "title": "Domain Expiring Within 90 Days",
+                    "description": f"Domain expires in {days_to_expire} days ({expires.strftime('%Y-%m-%d')}). Registrar: {w.registrar}",
+                    "affected_url": url,
+                    "recommendation": "Renew the domain before expiration.",
+                    "category": "Domain Intelligence"
+                })
+
+        desc = f"Registrar: {whois_detail['registrar']}. Created: {whois_detail['created']}. Expires: {whois_detail['expires']}."
+        if domain_age_str:
+            desc += f" Age: {domain_age_str}."
+        if whois_detail['org'] != 'N/A':
+            desc += f" Org: {whois_detail['org']}."
+
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "WHOIS Information",
+            "description": desc,
+            "affected_url": url,
+            "recommendation": "Verify domain registration details are correct.",
+            "category": "Domain Intelligence"
+        })
+
+    except Exception as e:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "WHOIS Lookup Failed",
+            "description": f"Could not retrieve WHOIS data: {str(e)[:100]}",
+            "affected_url": url,
+            "recommendation": "WHOIS may be restricted for this domain.",
+            "category": "Domain Intelligence"
+        })
+    return findings, whois_detail
+
+
+def check_ip_geolocation(url):
+    findings = []
+    geo_detail = {}
+    domain = get_domain(url)
+    try:
+        ip = socket.gethostbyname(domain)
+        r = requests.get(f'http://ip-api.com/json/{ip}?fields=status,country,regionName,city,isp,org,as,lat,lon', timeout=5)
+        data = r.json()
+        if data.get('status') == 'success':
+            geo_detail = {
+                'ip': ip,
+                'country': data.get('country', 'N/A'),
+                'region': data.get('regionName', 'N/A'),
+                'city': data.get('city', 'N/A'),
+                'isp': data.get('isp', 'N/A'),
+                'org': data.get('org', 'N/A'),
+                'as': data.get('as', 'N/A'),
+                'lat': data.get('lat', 0),
+                'lon': data.get('lon', 0),
+            }
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "IP Geolocation",
+                "description": f"IP: {ip} | Location: {geo_detail['city']}, {geo_detail['region']}, {geo_detail['country']} | ISP: {geo_detail['isp']} | Org: {geo_detail['org']}",
+                "affected_url": url,
+                "recommendation": "Verify server location matches expected hosting region.",
+                "category": "IP & Location"
+            })
+        else:
+            geo_detail = {'ip': ip, 'error': 'Lookup failed'}
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "IP Geolocation",
+                "description": f"IP: {ip} - Geolocation lookup returned no data.",
+                "affected_url": url,
+                "recommendation": "IP may be private or lookup service unavailable.",
+                "category": "IP & Location"
+            })
+    except Exception as e:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "IP Geolocation Failed",
+            "description": f"Could not resolve IP or geolocate: {str(e)[:100]}",
+            "affected_url": url,
+            "recommendation": "Verify domain resolves correctly.",
+            "category": "IP & Location"
+        })
+    return findings, geo_detail
+
+
+def check_subdomains(url):
+    findings = []
+    found_subdomains = []
+    domain = get_domain(url)
+    base_domain = domain.replace('www.', '')
+
+    def resolve_sub(sub):
+        subdomain = f"{sub}.{base_domain}"
+        try:
+            ip = socket.gethostbyname(subdomain)
+            return {'subdomain': subdomain, 'ip': ip}
+        except:
+            return None
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(resolve_sub, sub): sub for sub in COMMON_SUBDOMAINS}
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                found_subdomains.append(result)
+
+    found_subdomains.sort(key=lambda x: x['subdomain'])
+
+    if found_subdomains:
+        sub_list = ', '.join(s['subdomain'] for s in found_subdomains[:15])
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": f"Subdomains Found ({len(found_subdomains)})",
+            "description": f"Discovered {len(found_subdomains)} subdomains: {sub_list}",
+            "affected_url": url,
+            "recommendation": "Review all subdomains for security. Ensure unused subdomains are decommissioned.",
+            "category": "Subdomain Enumeration"
+        })
+
+        # Check for potentially dangerous subdomains
+        risky_subs = [s for s in found_subdomains if any(
+            k in s['subdomain'] for k in ['admin', 'staging', 'dev', 'test', 'jenkins', 'git', 'jira']
+        )]
+        if risky_subs:
+            findings.append({
+                "severity": "medium",
+                "cvss_score": 4.3,
+                "title": "Sensitive Subdomains Exposed",
+                "description": f"Potentially sensitive subdomains: {', '.join(s['subdomain'] for s in risky_subs)}",
+                "affected_url": url,
+                "recommendation": "Restrict access to admin/dev/staging subdomains. Use VPN or IP whitelisting.",
+                "category": "Subdomain Enumeration"
+            })
+    else:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "No Subdomains Found",
+            "description": f"Checked {len(COMMON_SUBDOMAINS)} common subdomain prefixes. None resolved.",
+            "affected_url": url,
+            "recommendation": "No action needed.",
+            "category": "Subdomain Enumeration"
+        })
+
+    return findings, found_subdomains
+
+
+def check_content_analysis(url):
+    findings = []
+    content_detail = {}
+    try:
+        r = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, verify=False)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        domain = get_domain(url)
+
+        # Extract meta info
+        title = soup.title.string.strip() if soup.title and soup.title.string else ''
+        meta_desc = ''
+        meta_kw = ''
+        desc_tag = soup.find('meta', attrs={'name': re.compile(r'description', re.I)})
+        if desc_tag and desc_tag.get('content'):
+            meta_desc = desc_tag['content']
+        kw_tag = soup.find('meta', attrs={'name': re.compile(r'keywords', re.I)})
+        if kw_tag and kw_tag.get('content'):
+            meta_kw = kw_tag['content']
+
+        h1_tags = [h.get_text(strip=True) for h in soup.find_all('h1')][:5]
+        h2_tags = [h.get_text(strip=True) for h in soup.find_all('h2')][:10]
+
+        all_links = soup.find_all('a', href=True)
+        internal_links = []
+        external_links = []
+        for link in all_links:
+            href = link.get('href', '')
+            if href.startswith(('http://', 'https://')):
+                link_domain = urlparse(href).hostname
+                if link_domain and link_domain != domain and not link_domain.endswith('.' + domain):
+                    external_links.append(href)
+                else:
+                    internal_links.append(href)
+            elif href.startswith('/') or href.startswith('#'):
+                internal_links.append(href)
+
+        contact_emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', r.text)
+        phone_numbers = re.findall(r'[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]', r.text)[:10]
+
+        content_detail = {
+            'title': title,
+            'meta_description': meta_desc[:200],
+            'meta_keywords': meta_kw[:200],
+            'h1_tags': h1_tags,
+            'h2_tags': h2_tags,
+            'total_links': len(all_links),
+            'internal_links': len(internal_links),
+            'external_links': len(external_links),
+            'images': len(soup.find_all('img')),
+            'scripts': len(soup.find_all('script')),
+            'word_count': len(r.text.split()),
+            'page_size_kb': round(len(r.content) / 1024, 1),
+            'contact_emails': list(set(contact_emails))[:10],
+            'phone_numbers': list(set(phone_numbers))[:10],
+        }
+
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "Content Analysis",
+            "description": f"Title: '{title}' | {content_detail['word_count']} words | {content_detail['total_links']} links ({content_detail['internal_links']} internal, {content_detail['external_links']} external) | {content_detail['images']} images | {content_detail['page_size_kb']}KB",
+            "affected_url": url,
+            "recommendation": "Review page content for sensitive information exposure.",
+            "category": "Content Analysis"
+        })
+
+        if not title:
+            findings.append({
+                "severity": "low",
+                "cvss_score": 1.0,
+                "title": "Missing Page Title",
+                "description": "The page has no <title> tag set.",
+                "affected_url": url,
+                "recommendation": "Add a descriptive title tag for SEO and accessibility.",
+                "category": "Content Analysis"
+            })
+
+    except Exception as e:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "Content Analysis Failed",
+            "description": f"Could not analyze page content: {str(e)[:100]}",
+            "affected_url": url,
+            "recommendation": "Verify URL accessibility.",
+            "category": "Content Analysis"
+        })
+    return findings, content_detail
+
+
+def check_performance(url):
+    findings = []
+    perf_detail = {}
+    try:
+        start = time.time()
+        r = requests.get(url, timeout=15, verify=False, headers={'User-Agent': 'Mozilla/5.0'})
+        load_time = time.time() - start
+
+        perf_detail = {
+            'load_time_seconds': round(load_time, 2),
+            'response_size_kb': round(len(r.content) / 1024, 1),
+            'status_code': r.status_code,
+            'server_timing': r.headers.get('Server-Timing', 'N/A'),
+            'cache_control': r.headers.get('Cache-Control', 'None'),
+            'cdn_detected': 'cloudflare' in str(r.headers).lower() or 'cf-ray' in r.headers,
+            'content_encoding': r.headers.get('Content-Encoding', 'None'),
+            'transfer_encoding': r.headers.get('Transfer-Encoding', 'N/A'),
+        }
+
+        if perf_detail['cdn_detected']:
+            perf_detail['cdn_provider'] = 'Cloudflare'
+        elif 'x-amz' in str(r.headers).lower():
+            perf_detail['cdn_detected'] = True
+            perf_detail['cdn_provider'] = 'AWS CloudFront'
+        elif 'x-served-by' in r.headers:
+            perf_detail['cdn_detected'] = True
+            perf_detail['cdn_provider'] = 'Fastly/Other'
+
+        if load_time > 5:
+            findings.append({
+                "severity": "medium",
+                "cvss_score": 3.0,
+                "title": "Slow Page Load",
+                "description": f"Page took {perf_detail['load_time_seconds']}s to load ({perf_detail['response_size_kb']}KB). This may indicate server performance issues.",
+                "affected_url": url,
+                "recommendation": "Optimize server response time. Consider using a CDN, enabling compression, and caching.",
+                "category": "Performance"
+            })
+        elif load_time > 3:
+            findings.append({
+                "severity": "low",
+                "cvss_score": 1.0,
+                "title": "Moderate Page Load Time",
+                "description": f"Page load: {perf_detail['load_time_seconds']}s | Size: {perf_detail['response_size_kb']}KB | CDN: {'Yes' if perf_detail['cdn_detected'] else 'No'}",
+                "affected_url": url,
+                "recommendation": "Page performance is acceptable but could be improved.",
+                "category": "Performance"
+            })
+        else:
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "Good Performance",
+                "description": f"Load time: {perf_detail['load_time_seconds']}s | Size: {perf_detail['response_size_kb']}KB | CDN: {'Yes (' + perf_detail.get('cdn_provider', '') + ')' if perf_detail['cdn_detected'] else 'No'} | Cache: {perf_detail['cache_control']}",
+                "affected_url": url,
+                "recommendation": "Performance is good. Continue monitoring.",
+                "category": "Performance"
+            })
+
+        if perf_detail['content_encoding'] == 'None' and perf_detail['response_size_kb'] > 50:
+            findings.append({
+                "severity": "low",
+                "cvss_score": 1.0,
+                "title": "No Compression Detected",
+                "description": f"Response is {perf_detail['response_size_kb']}KB without compression (gzip/brotli).",
+                "affected_url": url,
+                "recommendation": "Enable gzip or brotli compression to reduce transfer size.",
+                "category": "Performance"
+            })
+
+    except Exception as e:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "Performance Check Failed",
+            "description": f"Could not measure performance: {str(e)[:100]}",
+            "affected_url": url,
+            "recommendation": "Verify URL accessibility.",
+            "category": "Performance"
+        })
+    return findings, perf_detail
+
+
+def check_email_security(url):
+    findings = []
+    email_sec_detail = {}
+    domain = get_domain(url)
+    base_domain = domain.replace('www.', '')
+
+    # MX Records
+    try:
+        mx = dns.resolver.resolve(base_domain, 'MX')
+        email_sec_detail['mx_records'] = [str(r.exchange) for r in mx]
+    except:
+        email_sec_detail['mx_records'] = []
+
+    # SPF
+    try:
+        txt = dns.resolver.resolve(base_domain, 'TXT')
+        spf = [str(r) for r in txt if 'v=spf1' in str(r)]
+        email_sec_detail['spf'] = spf[0] if spf else None
+    except:
+        email_sec_detail['spf'] = None
+
+    # DMARC
+    try:
+        dmarc = dns.resolver.resolve(f'_dmarc.{base_domain}', 'TXT')
+        email_sec_detail['dmarc'] = str(list(dmarc)[0])
+    except:
+        email_sec_detail['dmarc'] = None
+
+    # Analyze results
+    if not email_sec_detail['mx_records']:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "No MX Records",
+            "description": f"No MX records found for {base_domain}. Domain may not receive email.",
+            "affected_url": url,
+            "recommendation": "If email is needed, configure MX records.",
+            "category": "Email Security"
+        })
+    else:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": f"MX Records ({len(email_sec_detail['mx_records'])})",
+            "description": f"Mail servers: {', '.join(email_sec_detail['mx_records'][:5])}",
+            "affected_url": url,
+            "recommendation": "Verify MX records point to legitimate mail servers.",
+            "category": "Email Security"
+        })
+
+    if not email_sec_detail['spf']:
+        findings.append({
+            "severity": "medium",
+            "cvss_score": 5.0,
+            "title": "Missing SPF Record",
+            "description": f"No SPF record found for {base_domain}. Email spoofing is possible.",
+            "affected_url": url,
+            "recommendation": "Add SPF record: v=spf1 include:_spf.google.com ~all (adjust for your mail provider).",
+            "category": "Email Security"
+        })
+    else:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "SPF Record Present",
+            "description": f"SPF: {email_sec_detail['spf'][:150]}",
+            "affected_url": url,
+            "recommendation": "Verify SPF includes all legitimate sending sources.",
+            "category": "Email Security"
+        })
+
+    if not email_sec_detail['dmarc']:
+        findings.append({
+            "severity": "medium",
+            "cvss_score": 5.0,
+            "title": "Missing DMARC Record",
+            "description": f"No DMARC record found for {base_domain}. Domain is vulnerable to email spoofing/phishing.",
+            "affected_url": url,
+            "recommendation": "Add DMARC record: _dmarc.domain.com TXT \"v=DMARC1; p=quarantine; rua=mailto:dmarc@domain.com\"",
+            "category": "Email Security"
+        })
+    else:
+        # Check DMARC policy
+        dmarc_val = email_sec_detail['dmarc']
+        if 'p=none' in dmarc_val:
+            findings.append({
+                "severity": "low",
+                "cvss_score": 3.0,
+                "title": "DMARC Policy Set to None",
+                "description": f"DMARC record exists but policy is 'none' (monitoring only): {dmarc_val[:150]}",
+                "affected_url": url,
+                "recommendation": "Upgrade DMARC policy to 'quarantine' or 'reject' for active protection.",
+                "category": "Email Security"
+            })
+        else:
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "DMARC Record Present",
+                "description": f"DMARC: {dmarc_val[:150]}",
+                "affected_url": url,
+                "recommendation": "DMARC is configured. Monitor reports for issues.",
+                "category": "Email Security"
+            })
+
+    return findings, email_sec_detail
+
+
+def check_http_methods(url):
+    findings = []
+    methods_detail = []
+
+    for method in DANGEROUS_METHODS:
+        try:
+            r = requests.request(method, url, timeout=5, verify=False)
+            if r.status_code not in [405, 501, 404]:
+                methods_detail.append({'method': method, 'status': r.status_code})
+        except:
+            pass
+
+    if methods_detail:
+        dangerous = [m for m in methods_detail if m['method'] in ['TRACE', 'TRACK', 'PUT', 'DELETE']]
+        if dangerous:
+            findings.append({
+                "severity": "medium",
+                "cvss_score": 5.3,
+                "title": "Dangerous HTTP Methods Allowed",
+                "description": f"Server allows potentially dangerous methods: {', '.join(m['method'] + '(' + str(m['status']) + ')' for m in dangerous)}",
+                "affected_url": url,
+                "recommendation": "Disable TRACE, TRACK, PUT, DELETE methods unless explicitly needed. Configure web server to reject these.",
+                "category": "HTTP Methods"
+            })
+        else:
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "HTTP Methods Check",
+                "description": f"Non-standard methods allowed: {', '.join(m['method'] + '(' + str(m['status']) + ')' for m in methods_detail)}",
+                "affected_url": url,
+                "recommendation": "Review if all allowed methods are necessary.",
+                "category": "HTTP Methods"
+            })
+    else:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "HTTP Methods Properly Restricted",
+            "description": "Server correctly rejects dangerous HTTP methods (TRACE, TRACK, PUT, DELETE, PATCH, OPTIONS).",
+            "affected_url": url,
+            "recommendation": "Good practice - methods properly restricted.",
+            "category": "HTTP Methods"
+        })
+
+    return findings, methods_detail
+
+
+def check_social_presence(url):
+    findings = []
+    presence_detail = {}
+    domain = get_domain(url)
+    brand = domain.replace('www.', '').split('.')[0]
+
+    platforms = {
+        'twitter': f'https://twitter.com/{brand}',
+        'facebook': f'https://facebook.com/{brand}',
+        'instagram': f'https://instagram.com/{brand}',
+        'linkedin': f'https://linkedin.com/company/{brand}',
+        'github': f'https://github.com/{brand}',
+        'youtube': f'https://youtube.com/@{brand}',
+    }
+
+    def check_platform(platform_info):
+        platform, check_url = platform_info
+        try:
+            r = requests.head(check_url, timeout=5, allow_redirects=True,
+                            headers={'User-Agent': 'Mozilla/5.0'})
+            return platform, {'url': check_url, 'status': r.status_code, 'exists': r.status_code == 200}
+        except:
+            return platform, {'url': check_url, 'status': 0, 'exists': False}
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = [executor.submit(check_platform, item) for item in platforms.items()]
+        for future in as_completed(futures):
+            platform, result = future.result()
+            presence_detail[platform] = result
+
+    found = [p for p, info in presence_detail.items() if info['exists']]
+    not_found = [p for p, info in presence_detail.items() if not info['exists']]
+
+    if found:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": f"Social Media Presence ({len(found)}/{len(platforms)})",
+            "description": f"Brand '{brand}' found on: {', '.join(found)}. Not found: {', '.join(not_found) if not_found else 'None'}",
+            "affected_url": url,
+            "recommendation": "Verify these are your official accounts. Claim unclaimed profiles to prevent impersonation.",
+            "category": "Social Presence"
+        })
+    else:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "No Social Media Presence Detected",
+            "description": f"Brand '{brand}' not found on any checked platforms ({', '.join(platforms.keys())})",
+            "affected_url": url,
+            "recommendation": "Consider registering brand names on major platforms to prevent impersonation.",
+            "category": "Social Presence"
+        })
+
+    return findings, presence_detail
+
+
+def check_wayback(url):
+    findings = []
+    wayback_detail = {}
+    domain = get_domain(url)
+    base = domain.replace('www.', '')
+    try:
+        r = requests.get(f'http://archive.org/wayback/available?url={base}', timeout=8)
+        data = r.json()
+        snapshot = data.get('archived_snapshots', {}).get('closest', {})
+        wayback_detail = {
+            'available': snapshot.get('available', False),
+            'url': snapshot.get('url', ''),
+            'timestamp': snapshot.get('timestamp', ''),
+            'status': snapshot.get('status', ''),
+        }
+
+        if wayback_detail['available']:
+            ts = wayback_detail['timestamp']
+            formatted_date = f"{ts[:4]}-{ts[4:6]}-{ts[6:8]}" if len(ts) >= 8 else ts
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "Wayback Machine Archive Found",
+                "description": f"Site is archived. Latest snapshot: {formatted_date}. Archive URL: {wayback_detail['url'][:100]}",
+                "affected_url": url,
+                "recommendation": "Review archived versions for accidentally exposed sensitive information.",
+                "category": "Archive History"
+            })
+        else:
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "No Wayback Machine Archive",
+                "description": "No archived snapshots found on the Wayback Machine.",
+                "affected_url": url,
+                "recommendation": "No action needed.",
+                "category": "Archive History"
+            })
+    except Exception as e:
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "Wayback Machine Check Failed",
+            "description": f"Could not query Wayback Machine: {str(e)[:100]}",
+            "affected_url": url,
+            "recommendation": "Service may be temporarily unavailable.",
+            "category": "Archive History"
+        })
+        wayback_detail = {'available': False}
+    return findings, wayback_detail
+
+
+# ===================== MAIN SCAN FUNCTION =====================
+
 def run_scan(url):
     url = normalize_url(url)
     scan_id = str(uuid.uuid4())
@@ -1304,6 +1974,16 @@ def run_scan(url):
         "external_domains": [],
         "forms": [],
         "javascript": [],
+        # New detail sections
+        "whois_detail": {},
+        "geo_detail": {},
+        "subdomains": [],
+        "content_detail": {},
+        "performance_detail": {},
+        "email_security": {},
+        "http_methods": [],
+        "social_presence": {},
+        "wayback_detail": {},
     }
 
     # Run checks that return (findings, detail)
@@ -1367,22 +2047,63 @@ def run_scan(url):
         f, d = check_javascript(url)
         return "JavaScript Analysis", f, ("javascript", d)
 
+    # New module runners
+    def run_whois():
+        f, d = check_whois_info(url)
+        return "WHOIS", f, ("whois_detail", d)
+
+    def run_geo():
+        f, d = check_ip_geolocation(url)
+        return "IP Geolocation", f, ("geo_detail", d)
+
+    def run_subdomains():
+        f, d = check_subdomains(url)
+        return "Subdomain Enumeration", f, ("subdomains", d)
+
+    def run_content():
+        f, d = check_content_analysis(url)
+        return "Content Analysis", f, ("content_detail", d)
+
+    def run_performance():
+        f, d = check_performance(url)
+        return "Performance", f, ("performance_detail", d)
+
+    def run_email_security():
+        f, d = check_email_security(url)
+        return "Email Security", f, ("email_security", d)
+
+    def run_http_methods():
+        f, d = check_http_methods(url)
+        return "HTTP Methods", f, ("http_methods", d)
+
+    def run_social_presence():
+        f, d = check_social_presence(url)
+        return "Social Presence", f, ("social_presence", d)
+
+    def run_wayback():
+        f, d = check_wayback(url)
+        return "Wayback Machine", f, ("wayback_detail", d)
+
     checks = [
         run_headers, run_ssl, run_tech, run_exposed, run_dns,
         run_robots, run_cookies, run_cors, run_server,
         run_ports, run_emails, run_social, run_external,
         run_forms, run_js,
+        # New modules
+        run_whois, run_geo, run_subdomains, run_content,
+        run_performance, run_email_security, run_http_methods,
+        run_social_presence, run_wayback,
     ]
 
     progress = []
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=12) as executor:
         futures = {executor.submit(func): func.__name__ for func in checks}
 
         for future in as_completed(futures):
             func_name = futures[future]
             try:
-                result = future.result(timeout=30)
+                result = future.result(timeout=45)
                 check_name, findings, detail_info = result
                 all_findings.extend(findings)
                 progress.append({"check": check_name, "status": "done", "findings": len(findings)})
@@ -1437,6 +2158,7 @@ def run_scan(url):
         "details": details,
         "progress": progress,
         "paths_checked": len(EXPOSED_FILES),
+        "modules_count": len(checks),
     }
 
     return report
