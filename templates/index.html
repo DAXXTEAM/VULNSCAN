@@ -14,21 +14,151 @@
             --secondary: #0ea5e9;
             --accent: #f59e0b;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --text: #e2e8f0;
-            --muted: #64748b;
+            --muted: #94a3b8;
             --font-mono: 'JetBrains Mono', monospace;
             --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        /* ═══════════════════════════════════════════ */
+        /* FIX 1: OVERFLOW - Universal box-sizing     */
+        /* ═══════════════════════════════════════════ */
+        * { margin: 0; padding: 0; box-sizing: border-box; max-width: 100%; }
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
         body {
             font-family: var(--font-ui);
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
+            font-size: 14px;
+            line-height: 1.6;
         }
+
+        /* Text wraps properly */
+        p, span, div, td, th, li {
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        /* URLs and code break properly */
+        .url, code, pre, .mono, [class*="mono"],
+        .finding-endpoint span,
+        .detail-list a,
+        .sub-name, .sub-ip {
+            word-break: break-all;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            max-width: 100%;
+        }
+
+        /* Tables scroll horizontally */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            border-radius: 8px;
+        }
+        table {
+            min-width: 100%;
+            table-layout: auto;
+        }
+
+        /* Cards don't overflow */
+        .finding-card, .card, [class*="panel-card"], .sev-card, .form-card {
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        /* Tabs scroll on mobile */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .tab-nav::-webkit-scrollbar { display: none; }
+
+        /* Bottom bar doesn't overflow */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(3, 7, 18, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 12px 24px;
+            display: none;
+            justify-content: center;
+            gap: 12px;
+            z-index: 1000;
+            flex-wrap: wrap;
+            overflow: hidden;
+            width: 100%;
+        }
+        .bottom-bar.show { display: flex; }
+
+        /* ═══════════════════════════════════════════ */
+        /* FIX 2: SCROLLING                           */
+        /* ═══════════════════════════════════════════ */
+        .terminal-body {
+            padding: 18px 20px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--primary);
+            min-height: 140px;
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .terminal-body::-webkit-scrollbar { width: 6px; }
+        .terminal-body::-webkit-scrollbar-track { background: transparent; }
+        .terminal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .results-section {
+            display: none;
+            animation: fadeInUp 0.6s ease forwards;
+            overflow: visible;
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* FIX 3: BUTTONS                             */
+        /* ═══════════════════════════════════════════ */
+        button, .btn {
+            min-height: 40px;
+            cursor: pointer;
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* FIX 4: TEXT SIZE - Responsive clamp()      */
+        /* ═══════════════════════════════════════════ */
+        h1 { font-size: clamp(24px, 5vw, 48px); }
+        h2 { font-size: clamp(16px, 3vw, 24px); }
+        h3 { font-size: clamp(14px, 2.5vw, 18px); }
+
+        /* ═══════════════════════════════════════════ */
+        /* FIX 5: COLORS - Severity badges            */
+        /* ═══════════════════════════════════════════ */
+        .severity-critical, .sev-critical { background: #ef4444; color: white; }
+        .severity-high, .sev-high { background: #f97316; color: white; }
+        .severity-medium, .sev-medium { background: #f59e0b; color: black; }
+        .severity-low, .sev-low { background: #3b82f6; color: white; }
+        .severity-info, .sev-info { background: #6366f1; color: white; }
+        .finding-description, .finding-desc-text { color: var(--text); }
+        .muted-text { color: var(--muted); }
 
         /* ═══════════════════════════════════════════ */
         /* TOAST NOTIFICATION                         */
@@ -59,7 +189,7 @@
         }
 
         /* ═══════════════════════════════════════════ */
-        /* STICKY NAVBAR                              */
+        /* FIX 6: STICKY NAVBAR - Mobile fix          */
         /* ═══════════════════════════════════════════ */
         .navbar {
             position: sticky;
@@ -70,10 +200,11 @@
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             padding: 0 24px;
-            height: 56px;
+            min-height: 56px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: nowrap;
         }
         .nav-brand {
             display: flex;
@@ -81,7 +212,7 @@
             gap: 10px;
             font-family: var(--font-mono);
             font-weight: 700;
-            font-size: 16px;
+            font-size: clamp(16px, 3vw, 24px);
             color: var(--primary);
             letter-spacing: 1px;
         }
@@ -140,9 +271,6 @@
             padding: 1px 5px;
             font-size: 10px;
         }
-        @media (max-width: 768px) {
-            .nav-shortcuts { display: none; }
-        }
 
         /* ═══════════════════════════════════════════ */
         /* MAIN CONTAINER                             */
@@ -173,6 +301,10 @@
             content: '> ';
             color: var(--muted);
         }
+
+        /* ═══════════════════════════════════════════ */
+        /* FIX 7: INPUT - Fix on all screens          */
+        /* ═══════════════════════════════════════════ */
         .input-wrapper {
             display: flex;
             gap: 12px;
@@ -182,6 +314,8 @@
         }
         .url-input {
             flex: 1;
+            min-width: 0;
+            width: 100%;
             background: var(--card);
             border: 2px solid var(--border);
             border-radius: 8px;
@@ -191,7 +325,6 @@
             outline: none;
             transition: all 0.3s ease;
             font-family: var(--font-mono);
-            min-width: 0;
         }
         .url-input:focus {
             border-color: var(--primary);
@@ -220,6 +353,7 @@
             align-items: center;
             gap: 8px;
             font-family: var(--font-ui);
+            min-height: 40px;
         }
         .scan-btn:hover {
             transform: translateY(-2px);
@@ -331,22 +465,9 @@
             cursor: pointer;
             font-family: var(--font-mono);
             transition: all 0.2s;
+            min-height: unset;
         }
         .terminal-minimize:hover { border-color: var(--primary); color: var(--primary); }
-        .terminal-body {
-            padding: 18px 20px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            color: var(--primary);
-            min-height: 140px;
-            max-height: 240px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--border) transparent;
-        }
-        .terminal-body::-webkit-scrollbar { width: 6px; }
-        .terminal-body::-webkit-scrollbar-track { background: transparent; }
-        .terminal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
         .terminal-prompt {
             color: var(--secondary);
             margin-bottom: 8px;
@@ -358,6 +479,7 @@
             display: flex;
             gap: 10px;
             align-items: flex-start;
+            font-size: clamp(11px, 1.5vw, 13px);
         }
         .terminal-line .timestamp {
             color: var(--muted);
@@ -428,10 +550,6 @@
         /* ═══════════════════════════════════════════ */
         /* RESULTS SECTION                            */
         /* ═══════════════════════════════════════════ */
-        .results-section {
-            display: none;
-            animation: fadeInUp 0.6s ease forwards;
-        }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
@@ -520,23 +638,13 @@
         /* ═══════════════════════════════════════════ */
         /* TAB NAVIGATION                             */
         /* ═══════════════════════════════════════════ */
-        .tab-nav {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 24px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .tab-nav::-webkit-scrollbar { display: none; }
         .tab-btn {
             background: transparent;
             border: 1px solid var(--border);
             color: var(--muted);
-            padding: 10px 16px;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: clamp(11px, 1.8vw, 14px);
             cursor: pointer;
             transition: all 0.3s;
             font-family: var(--font-ui);
@@ -545,6 +653,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            min-height: 40px;
         }
         .tab-btn:hover {
             border-color: var(--primary);
@@ -586,6 +695,7 @@
             opacity: 0;
             transform: translateY(10px);
             animation: staggerFade 0.4s forwards;
+            max-width: 100%;
         }
         .finding-card:hover { border-color: #2e4066; }
         .finding-card-header {
@@ -616,16 +726,10 @@
             border-radius: 4px;
             font-size: 10px;
             font-weight: 700;
-            color: #fff;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-family: var(--font-mono);
         }
-        .sev-critical { background: var(--danger); }
-        .sev-high { background: #f97316; }
-        .sev-medium { background: var(--accent); color: #000; }
-        .sev-low { background: var(--secondary); color: #000; }
-        .sev-info { background: #475569; }
         .cvss-tag {
             font-family: var(--font-mono);
             font-size: 12px;
@@ -639,6 +743,7 @@
         .cvss-medium { color: var(--accent); }
         .cvss-low { color: var(--secondary); }
         .cvss-info { color: var(--muted); }
+        .cvss-score { font-size: clamp(16px, 3vw, 24px); }
         .category-tag {
             font-size: 10px;
             color: var(--primary);
@@ -648,7 +753,7 @@
             font-family: var(--font-mono);
         }
         .finding-title {
-            font-size: 14px;
+            font-size: clamp(13px, 2vw, 16px);
             font-weight: 600;
             color: #fff;
             margin-bottom: 4px;
@@ -684,7 +789,7 @@
         .finding-section-label:first-child { margin-top: 0; }
         .finding-desc-text {
             font-size: 13px;
-            color: #94a3b8;
+            color: var(--text);
             line-height: 1.7;
         }
         .finding-endpoint {
@@ -719,7 +824,7 @@
         }
         .finding-fix-box .fix-text {
             font-size: 13px;
-            color: #94a3b8;
+            color: var(--text);
             line-height: 1.6;
         }
 
@@ -862,7 +967,7 @@
             padding: 10px 0;
             border-bottom: 1px solid var(--border);
             font-size: 13px;
-            color: #94a3b8;
+            color: var(--text);
             font-family: var(--font-mono);
             word-break: break-all;
             display: flex;
@@ -885,16 +990,12 @@
             flex-shrink: 0;
             font-family: var(--font-mono);
             letter-spacing: 0.5px;
+            min-height: unset;
         }
         .copy-btn:hover { border-color: var(--primary); color: var(--primary); }
         .copy-btn.copied { border-color: var(--primary); color: var(--primary); }
 
         /* Headers Table */
-        .table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 8px;
-        }
         .headers-table {
             width: 100%;
             border-collapse: collapse;
@@ -978,10 +1079,12 @@
             border-radius: 8px;
             padding: 14px;
             margin-bottom: 10px;
+            overflow: hidden;
+            max-width: 100%;
         }
         .form-card .form-meta {
             font-size: 12px;
-            color: #94a3b8;
+            color: var(--text);
             margin-bottom: 6px;
             word-break: break-all;
             font-family: var(--font-mono);
@@ -1007,6 +1110,8 @@
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 16px;
+            overflow: hidden;
+            max-width: 100%;
         }
         .panel-title {
             font-size: 12px;
@@ -1022,25 +1127,8 @@
         }
 
         /* ═══════════════════════════════════════════ */
-        /* STICKY BOTTOM BAR                          */
+        /* STICKY BOTTOM BAR BUTTONS                  */
         /* ═══════════════════════════════════════════ */
-        .bottom-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(3, 7, 18, 0.96);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border);
-            padding: 12px 24px;
-            display: none;
-            justify-content: center;
-            gap: 12px;
-            z-index: 1000;
-            flex-wrap: wrap;
-        }
-        .bottom-bar.show { display: flex; }
         .bar-btn {
             background: var(--card);
             border: 1px solid var(--border);
@@ -1057,6 +1145,8 @@
             align-items: center;
             gap: 6px;
             text-decoration: none;
+            white-space: nowrap;
+            min-height: 40px;
         }
         .bar-btn:hover {
             border-color: var(--primary);
@@ -1127,14 +1217,14 @@
             .container { padding: 0 12px; padding-bottom: 90px; }
             .input-wrapper { flex-direction: column; }
             .scan-btn { width: 100%; justify-content: center; padding: 16px; }
-            .url-input { font-size: 14px; padding: 14px 16px; }
+            .url-input { font-size: 14px; padding: 14px 16px; width: 100%; }
             .severity-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
             .sev-card { padding: 16px 12px; }
             .sev-card .num { font-size: 28px; }
             .risk-banner { flex-direction: column; align-items: flex-start; }
             .tab-nav { gap: 6px; }
             .tab-btn { padding: 8px 12px; font-size: 11px; }
-            .terminal-body { font-size: 11px; min-height: 100px; }
+            .terminal-body { font-size: 11px; min-height: 100px; max-height: 250px; }
             .finding-card-header { padding: 14px 16px; }
             .finding-details-inner { padding: 14px 16px; }
             .info-table td:first-child { width: 100px; font-size: 10px; }
@@ -1142,12 +1232,37 @@
             .ssl-grid { grid-template-columns: 1fr; }
             .subdomain-grid { grid-template-columns: 1fr; }
             .social-grid { grid-template-columns: 1fr; }
-            .bottom-bar { padding: 10px 12px; gap: 8px; }
+            .bottom-bar { padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
             .bar-btn { padding: 10px 14px; font-size: 11px; flex: 1; justify-content: center; }
             .toast { right: 12px; left: 12px; top: 68px; max-width: none; }
             .navbar { padding: 0 12px; }
+            .nav-shortcuts { display: none; }
+            .nav-brand .version { display: none; }
+            .keyboard-hint { display: none; }
         }
-        @media (max-width: 400px) {
+        @media (max-width: 600px) {
+            .bottom-bar {
+                flex-direction: column;
+                padding: 10px;
+            }
+            .bottom-bar .bar-btn {
+                width: 100%;
+                margin: 4px 0;
+                flex: unset;
+            }
+            .scan-btn {
+                width: 100%;
+                margin-top: 10px;
+            }
+            .input-wrapper {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .url-input { width: 100%; }
+        }
+        @media (max-width: 480px) {
+            .navbar { padding: 10px 15px; }
+            .nav-status span:not(.status-dot) { display: none; }
             .nav-brand { font-size: 14px; }
             .sev-card .num { font-size: 24px; }
             .mode-chip { padding: 6px 12px; font-size: 11px; }
@@ -1163,7 +1278,7 @@
         <div class="nav-brand">
             🛡 VULNSCAN <span class="version">v3.0</span>
         </div>
-        <div class="nav-shortcuts">
+        <div class="nav-shortcuts keyboard-hint">
             <span><kbd>Enter</kbd> Scan</span>
             <span><kbd>Esc</kbd> Cancel</span>
             <span><kbd>Ctrl+D</kbd> Download</span>
@@ -1710,7 +1825,7 @@
                             <div class="finding-title">${escapeHtml(f.title)}</div>
                             <div class="finding-hint">▸ Click to expand</div>
                         </div>
-                        <span style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${getRiskColor(f.severity.toUpperCase())};flex-shrink:0;">${f.cvss_score}</span>
+                        <span class="cvss-score" style="font-family:var(--font-mono);font-weight:700;color:${getRiskColor(f.severity.toUpperCase())};flex-shrink:0;">${f.cvss_score}</span>
                     </div>
                     <div class="finding-details">
                         <div class="finding-details-inner">
@@ -1739,7 +1854,7 @@
 
         function renderWhois(whois) {
             if (!Object.keys(whois).length || (whois.registrar === 'N/A' && !whois.created)) return '<p class="no-data">WHOIS data not available for this domain.</p>';
-            let html = '<table class="info-table">';
+            let html = '<div class="table-wrapper"><table class="info-table">';
             const items = [
                 ['Registrar', whois.registrar || 'N/A'],
                 ['Created', whois.created || 'N/A'],
@@ -1758,7 +1873,7 @@
                 }
                 html += `<tr><td>${label}</td><td class="${cls}">${escapeHtml(value)}</td></tr>`;
             }
-            html += '</table>';
+            html += '</table></div>';
             if (whois.name_servers && whois.name_servers.length) {
                 html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
                     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">NAME SERVERS</div>
@@ -1770,7 +1885,7 @@
 
         function renderGeo(geo) {
             if (!geo.ip) return '<p class="no-data">IP geolocation data not available.</p>';
-            let html = '<table class="info-table">';
+            let html = '<div class="table-wrapper"><table class="info-table">';
             const items = [
                 ['IP Address', geo.ip],
                 ['Country', geo.country || 'N/A'],
@@ -1784,7 +1899,7 @@
             for (const [label, value] of items) {
                 html += `<tr><td>${label}</td><td>${escapeHtml(String(value))}</td></tr>`;
             }
-            html += '</table>';
+            html += '</table></div>';
             return html;
         }
 
@@ -1817,10 +1932,10 @@
             }
             html += '</div>';
             if (content.meta_description) {
-                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">META DESCRIPTION</div><div style="font-size:12px;color:#94a3b8;line-height:1.6;">${escapeHtml(content.meta_description)}</div></div>`;
+                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">META DESCRIPTION</div><div style="font-size:12px;color:var(--text);line-height:1.6;">${escapeHtml(content.meta_description)}</div></div>`;
             }
             if (content.h1_tags && content.h1_tags.length) {
-                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">H1 TAGS</div><div style="font-size:12px;color:#94a3b8;">${content.h1_tags.map(h => escapeHtml(h)).join(' | ')}</div></div>`;
+                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">H1 TAGS</div><div style="font-size:12px;color:var(--text);">${content.h1_tags.map(h => escapeHtml(h)).join(' | ')}</div></div>`;
             }
             if (content.contact_emails && content.contact_emails.length) {
                 html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">CONTACT EMAILS</div><div style="font-size:12px;color:var(--primary);font-family:var(--font-mono);">${content.contact_emails.join(', ')}</div></div>`;
@@ -1871,7 +1986,7 @@
                 html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">DMARC RECORD</div><div style="font-size:11px;color:var(--primary);font-family:var(--font-mono);word-break:break-all;">${escapeHtml(emailSec.dmarc)}</div></div>`;
             }
             if (emailSec.mx_records && emailSec.mx_records.length) {
-                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">MX RECORDS</div><div style="font-size:11px;color:#94a3b8;font-family:var(--font-mono);">${emailSec.mx_records.join('<br>')}</div></div>`;
+                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">MX RECORDS</div><div style="font-size:11px;color:var(--text);font-family:var(--font-mono);">${emailSec.mx_records.join('<br>')}</div></div>`;
             }
             return html;
         }
@@ -1884,7 +1999,7 @@
             } else {
                 let ts = wayback.timestamp || '';
                 let formatted = ts.length >= 8 ? `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}` : ts;
-                content = `<table class="info-table"><tr><td>Status</td><td class="val-good">Archived</td></tr><tr><td>Last Snapshot</td><td>${escapeHtml(formatted)}</td></tr></table>`;
+                content = `<div class="table-wrapper"><table class="info-table"><tr><td>Status</td><td class="val-good">Archived</td></tr><tr><td>Last Snapshot</td><td>${escapeHtml(formatted)}</td></tr></table></div>`;
                 if (wayback.url) {
                     content += `<div style="margin-top:12px;"><a href="${escapeHtml(wayback.url)}" target="_blank" style="color:var(--primary);font-size:12px;text-decoration:none;font-family:var(--font-mono);">View on Wayback Machine →</a></div>`;
                 }
@@ -2000,7 +2115,7 @@
             }
             html += '</div>';
             if (ssl.sans && ssl.sans.length) {
-                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">SUBJECT ALT NAMES</div><div style="font-size:11px;color:#94a3b8;word-break:break-all;font-family:var(--font-mono);">${ssl.sans.join(', ')}</div></div>`;
+                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">SUBJECT ALT NAMES</div><div style="font-size:11px;color:var(--text);word-break:break-all;font-family:var(--font-mono);">${ssl.sans.join(', ')}</div></div>`;
             }
             return html;
         }
@@ -2052,7 +2167,7 @@
                 for (const link of links) {
                     html += `<li>
                         <strong style="color:var(--primary);">${platform}:</strong>
-                        <a href="${escapeHtml(link)}" target="_blank" style="color:#94a3b8;flex:1;min-width:0;word-break:break-all;text-decoration:none;font-family:var(--font-mono);font-size:12px;">${escapeHtml(link)}</a>
+                        <a href="${escapeHtml(link)}" target="_blank" style="color:var(--text);flex:1;min-width:0;word-break:break-all;text-decoration:none;font-family:var(--font-mono);font-size:12px;">${escapeHtml(link)}</a>
                         <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(link)}', this)">📋 COPY</button>
                     </li>`;
                 }
@@ -2066,7 +2181,7 @@
             let html = `<p style="color:var(--muted);font-size:12px;margin-bottom:10px;font-family:var(--font-mono);">${domains.length} external domains loading resources:</p>`;
             html += '<div class="tech-tags">';
             for (const d of domains) {
-                html += `<span class="tech-tag" style="color:#94a3b8;border-color:var(--border);">${escapeHtml(d)}</span>`;
+                html += `<span class="tech-tag" style="color:var(--text);border-color:var(--border);">${escapeHtml(d)}</span>`;
             }
             html += '</div>';
             return html;
@@ -2081,7 +2196,7 @@
                     issues = ` <span style="color:var(--danger);">(${js.issues.join(', ')})</span>`;
                 }
                 const icon = js.external ? '🌐' : '📄';
-                html += `<li>${icon} <span style="flex:1;min-width:0;word-break:break-all;color:#94a3b8;font-size:12px;">${escapeHtml(js.src)}</span>${issues}<button class="copy-btn" onclick="copyToClipboard('${escapeHtml(js.src)}', this)">📋 COPY</button></li>`;
+                html += `<li>${icon} <span style="flex:1;min-width:0;word-break:break-all;color:var(--text);font-size:12px;">${escapeHtml(js.src)}</span>${issues}<button class="copy-btn" onclick="copyToClipboard('${escapeHtml(js.src)}', this)">📋 COPY</button></li>`;
             }
             html += '</ul>';
             return html;
