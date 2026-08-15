@@ -1043,6 +1043,46 @@
             .container { padding: 12px 8px; padding-bottom: 90px; }
             .scan-box { padding: 14px; border-radius: 10px; }
         }
+
+        /* Download Buttons */
+        .download-btns {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0;
+            width: 100%;
+        }
+        .dl-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .dl-pdf {
+            background: linear-gradient(135deg, #ff3355, #ff6644);
+            color: white;
+        }
+        .dl-html {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            color: #000;
+        }
+        .dl-view {
+            background: #1a1a3a;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+        .dl-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+
+        @media (max-width: 768px) {
+            .dl-btn { width: 100%; text-align: center; }
+            .download-btns { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -1157,9 +1197,19 @@
 
     <!-- Sticky Download Bar -->
     <div class="sticky-download" id="stickyDownload">
-        <button class="action-btn primary" id="stickyDownloadBtn" onclick="downloadCurrentReport()">⬇ Download Report</button>
-        <button class="action-btn" onclick="scanAnother()">🔄 Scan Another</button>
+        <div class="download-btns">
+            <button onclick="downloadReport('pdf')" class="dl-btn dl-pdf">
+                ⬇ Download PDF Report
+            </button>
+            <button onclick="downloadReport('html')" class="dl-btn dl-html">
+                ⬇ Download HTML Report
+            </button>
+            <button onclick="if(currentScanId) window.open('/report/' + currentScanId)" class="dl-btn dl-view">
+                👁 View Full Report
+            </button>
+        </div>
     </div>
+
 
     <script>
         const urlInput = document.getElementById('urlInput');
@@ -1455,7 +1505,7 @@
                 <a class="action-btn" href="/report/${data.scan_id}" target="_blank">📄 HTML Report</a>
                 <a class="action-btn" href="/report/${data.scan_id}/json" target="_blank">💾 JSON Export</a>
                 <a class="action-btn" href="/scan/${data.scan_id}/details" target="_blank">📋 Full Details</a>
-                <button class="action-btn primary" onclick="downloadReport('${data.scan_id}')">⬇ Download Report</button>
+                <button class="action-btn primary" onclick="downloadReport('pdf')">⬇ PDF Report</button>
             `;
 
             let sections = '';
@@ -1938,22 +1988,32 @@
             return html;
         }
 
-        function downloadReport(scanId) {
-            fetch(`/report/${scanId}/json`)
-                .then(r => r.blob())
-                .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `vulnscan-report-${scanId}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    showToast('📥 Report downloaded');
-                });
+        function downloadReport(type) {
+            if (!currentScanId) return;
+            if (type === 'pdf') {
+                window.open('/report/' + currentScanId + '/pdf', '_blank');
+                showToast('📥 Generating PDF report...');
+            } else if (type === 'html') {
+                window.open('/report/' + currentScanId, '_blank');
+                showToast('📄 Opening HTML report...');
+            } else {
+                // JSON fallback
+                fetch(`/report/${currentScanId}/json`)
+                    .then(r => r.blob())
+                    .then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `vulnscan-report-${currentScanId}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        showToast('📥 JSON report downloaded');
+                    });
+            }
         }
 
         function downloadCurrentReport() {
-            if (currentScanId) downloadReport(currentScanId);
+            downloadReport('pdf');
         }
     </script>
     <style>

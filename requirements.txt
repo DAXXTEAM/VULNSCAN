@@ -3,3 +3,4 @@ requests
 dnspython
 beautifulsoup4
 python-whois
+weasyprint

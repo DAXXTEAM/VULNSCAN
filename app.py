@@ -1,7 +1,7 @@
 # VULNSCAN - Automated Web Security Scanner
 # Passive reconnaissance only - no active exploitation
 
-from flask import Flask, request, jsonify, render_template, Response
+from flask import Flask, request, jsonify, render_template, Response, send_file
 from scanner import run_scan
 from report import generate_report, generate_html_report
 import threading
@@ -97,6 +97,31 @@ def get_report_json(scan_id):
         return jsonify({"error": "Report not found"}), 404
     return jsonify(scan_results[scan_id])
 
+
+
+
+@app.route("/report/<scan_id>/pdf")
+def download_pdf(scan_id):
+    """Generate PDF using weasyprint and send as download"""
+    if scan_id not in scan_results:
+        return "Scan not found", 404
+    result = scan_results[scan_id]
+    if "error" in result and "findings" not in result:
+        return f"<h1>Scan Error</h1><p>{result['error']}</p>", 500
+    html = generate_report(result, target_url=result.get("target"))
+    try:
+        from weasyprint import HTML
+        import io
+        pdf_bytes = HTML(string=html).write_pdf()
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'vulnscan_report_{scan_id[:8]}.pdf'
+        )
+    except ImportError:
+        # Fallback: return HTML with print CSS
+        return Response(html, mimetype='text/html')
 
 if __name__ == "__main__":
     import warnings
