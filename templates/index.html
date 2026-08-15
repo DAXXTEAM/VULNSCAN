@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>VULNSCAN v3.0 — Advanced Web Security Scanner</title>
+    <title>VULNSCAN v4.0 — Advanced Web Security Scanner</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1267,6 +1267,178 @@
             .sev-card .num { font-size: 24px; }
             .mode-chip { padding: 6px 12px; font-size: 11px; }
         }
+
+        /* ═══════════════════════════════════════════ */
+        /* BULK SCAN & HISTORY - v4.0                  */
+        /* ═══════════════════════════════════════════ */
+        .scan-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .scan-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 12px 24px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            letter-spacing: 1px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            min-height: 44px;
+        }
+        .scan-tab-btn:hover { color: var(--primary); }
+        .scan-tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .scan-tab-content { display: none; }
+        .scan-tab-content.active { display: block; }
+
+        .bulk-textarea {
+            width: 100%;
+            min-height: 120px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-size: 13px;
+            color: #fff;
+            font-family: var(--font-mono);
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+            margin-bottom: 12px;
+        }
+        .bulk-textarea:focus { border-color: var(--primary); }
+        .bulk-textarea::placeholder { color: #334155; }
+
+        .bulk-btn {
+            background: var(--secondary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font-ui);
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            min-height: 40px;
+        }
+        .bulk-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3); }
+
+        .bulk-results {
+            margin-top: 16px;
+        }
+        .bulk-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+        .bulk-item .bulk-url { flex: 1; color: var(--text); word-break: break-all; }
+        .bulk-item .bulk-status {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .bulk-item .bulk-status.running { background: rgba(245, 158, 11, 0.15); color: var(--accent); }
+        .bulk-item .bulk-status.complete { background: rgba(0, 255, 136, 0.1); color: var(--primary); }
+        .bulk-item .bulk-status.error { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .bulk-item .bulk-view {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        /* History Panel */
+        .history-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-top: 32px;
+            overflow: hidden;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .history-header span {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--primary);
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .history-clear-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 0.3s;
+            min-height: unset;
+        }
+        .history-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+        .history-list { max-height: 300px; overflow-y: auto; }
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            border-bottom: 1px solid rgba(30, 45, 74, 0.4);
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+        .history-item:hover { background: rgba(0, 255, 136, 0.03); }
+        .history-item:last-child { border-bottom: none; }
+        .history-item .h-url { flex: 1; color: var(--text); word-break: break-all; min-width: 0; }
+        .history-item .h-date { color: var(--muted); font-size: 10px; flex-shrink: 0; }
+        .history-item .h-findings {
+            background: rgba(0, 255, 136, 0.08);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+        .history-item .h-risk {
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+            min-width: 32px;
+            text-align: right;
+        }
+        .history-empty {
+            padding: 24px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
     </style>
 </head>
 <body>
@@ -1276,7 +1448,7 @@
     <!-- Sticky Navbar -->
     <nav class="navbar">
         <div class="nav-brand">
-            🛡 VULNSCAN <span class="version">v3.0</span>
+            🛡 VULNSCAN <span class="version">v4.0</span>
         </div>
         <div class="nav-shortcuts keyboard-hint">
             <span><kbd>Enter</kbd> Scan</span>
@@ -1292,28 +1464,44 @@
     <div class="container">
         <!-- Hero Section -->
         <section class="hero">
-            <div class="hero-label">ENTER TARGET URL</div>
-            <div class="input-wrapper">
-                <input type="text" class="url-input" id="urlInput"
-                       placeholder="https://example.com"
-                       autocomplete="off" spellcheck="false">
-                <button class="scan-btn" id="scanBtn" onclick="startScan()">
-                    ⚡ SCAN TARGET
-                </button>
+            <div class="hero-label">AUTOMATED WEB SECURITY SCANNER</div>
+
+            <!-- Scan Tabs: SINGLE / BULK -->
+            <div class="scan-tabs">
+                <button class="scan-tab-btn active" onclick="switchScanTab('single')">⚡ SINGLE</button>
+                <button class="scan-tab-btn" onclick="switchScanTab('bulk')">📋 BULK</button>
             </div>
-            <div class="scan-modes">
-                <span class="mode-chip active" data-mode="full" onclick="selectScanMode(this)">
-                    <span class="dot"></span> FULL SCAN
-                </span>
-                <span class="mode-chip" data-mode="headers" onclick="selectScanMode(this)">
-                    <span class="dot"></span> HEADERS
-                </span>
-                <span class="mode-chip" data-mode="domain" onclick="selectScanMode(this)">
-                    <span class="dot"></span> DOMAIN
-                </span>
+
+            <!-- SINGLE SCAN TAB -->
+            <div class="scan-tab-content active" id="scanTabSingle">
+                <div class="input-wrapper">
+                    <input type="text" class="url-input" id="urlInput"
+                           placeholder="https://example.com"
+                           autocomplete="off" spellcheck="false">
+                    <button class="scan-btn" id="scanBtn" onclick="startScan()">
+                        ⚡ SCAN TARGET
+                    </button>
+                </div>
+                <div class="scan-modes">
+                    <span class="mode-chip active" data-mode="full" onclick="selectScanMode(this)">
+                        <span class="dot"></span> FULL SCAN
+                    </span>
+                    <span class="mode-chip" data-mode="headers" onclick="selectScanMode(this)">
+                        <span class="dot"></span> HEADERS
+                    </span>
+                    <span class="mode-chip" data-mode="domain" onclick="selectScanMode(this)">
+                        <span class="dot"></span> DOMAIN
+                    </span>
+                </div>
+            </div>
+
+            <!-- BULK SCAN TAB -->
+            <div class="scan-tab-content" id="scanTabBulk">
+                <textarea class="bulk-textarea" id="bulkUrls" placeholder="Enter URLs (one per line, max 10)&#10;https://example.com&#10;https://another-site.com&#10;https://test.org"></textarea>
+                <button class="bulk-btn" onclick="startBulkScan()">🚀 SCAN ALL TARGETS</button>
+                <div class="bulk-results" id="bulkResults"></div>
             </div>
         </section>
-
         <!-- Terminal Window -->
         <section class="terminal-section" id="terminalSection">
             <div class="terminal-window">
@@ -1364,9 +1552,21 @@
             <div id="tabPanels"></div>
         </section>
 
+
+        <!-- Scan History Panel -->
+        <div class="history-panel" id="historyPanel">
+            <div class="history-header">
+                <span>📜 RECENT SCANS</span>
+                <button class="history-clear-btn" onclick="clearHistory()">CLEAR ALL</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">No scan history yet.</div>
+            </div>
+        </div>
+
         <!-- Footer -->
         <div class="footer">
-            <p>Powered by VULNSCAN v3.0 — Built by Arpit Singh</p>
+            <p>Powered by VULNSCAN v4.0 — Built by Arpit Singh</p>
             <a href="https://github.com/DAXXTEAM/VULNSCAN" target="_blank">github.com/DAXXTEAM/VULNSCAN</a>
         </div>
     </div>
@@ -1731,6 +1931,8 @@
                 { id: 'tech', icon: '⚙️', label: 'Tech', count: (details.tech_list || []).length },
                 { id: 'subdomains', icon: '🔎', label: 'Subdomains', count: (details.subdomains || []).length },
                 { id: 'headers', icon: '🛡️', label: 'Headers', count: '' },
+                { id: 'reputation', icon: '🛡️', label: 'Reputation', count: '' },
+                { id: 'ctlogs', icon: '📜', label: 'CT Logs', count: (details.ct_detail && details.ct_detail.subdomains_count) || '' },
             ];
 
             let tabNavHTML = '';
@@ -1793,11 +1995,18 @@
             // Headers panel
             panelsHTML += `<div id="panel-headers" class="tab-panel"><div class="panel-card"><div class="panel-title">🛡️ SECURITY HEADERS</div>${renderHeadersTable(details.headers_detail || {})}</div></div>`;
 
+            // Reputation panel
+            panelsHTML += `<div id="panel-reputation" class="tab-panel">${renderReputation(details.reputation_detail || {})}${renderCVE(details.cve_findings || [])}</div>`;
+
+            // CT Logs panel
+            panelsHTML += `<div id="panel-ctlogs" class="tab-panel">${renderCTLogs(details.ct_detail || {})}</div>`;
+
             document.getElementById('tabPanels').innerHTML = panelsHTML;
 
             setTimeout(() => {
                 document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 200);
+                loadHistory();
         }
 
         function escapeHtml(str) {
@@ -2212,6 +2421,219 @@
                 showToast('⬇ Opening HTML report...');
             }
         }
+
+        // ===== v4.0 - SCAN TABS =====
+        function switchScanTab(tab) {
+            document.querySelectorAll('.scan-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.scan-tab-content').forEach(c => c.classList.remove('active'));
+            if (tab === 'single') {
+                document.querySelectorAll('.scan-tab-btn')[0].classList.add('active');
+                document.getElementById('scanTabSingle').classList.add('active');
+            } else {
+                document.querySelectorAll('.scan-tab-btn')[1].classList.add('active');
+                document.getElementById('scanTabBulk').classList.add('active');
+            }
+        }
+
+        // ===== v4.0 - BULK SCAN =====
+        async function startBulkScan() {
+            const textarea = document.getElementById('bulkUrls');
+            const urls = textarea.value.trim().split('\n').map(u => u.trim()).filter(u => u.length > 0);
+            if (!urls.length) {
+                showToast('⚠ Enter at least one URL', 3000);
+                return;
+            }
+            if (urls.length > 10) {
+                showToast('⚠ Maximum 10 URLs allowed', 3000);
+                return;
+            }
+
+            showToast(`🚀 Starting bulk scan of ${urls.length} target(s)...`);
+
+            try {
+                const resp = await fetch('/scan/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ urls })
+                });
+                const data = await resp.json();
+                if (data.ok) {
+                    renderBulkItems(data.scans);
+                    // Poll for status
+                    pollBulkScans(data.scans);
+                } else {
+                    showToast('✗ ' + (data.error || 'Bulk scan failed'), 4000);
+                }
+            } catch (err) {
+                showToast('✗ Network error: ' + err.message, 4000);
+            }
+        }
+
+        function renderBulkItems(scans) {
+            const container = document.getElementById('bulkResults');
+            let html = '';
+            for (const s of scans) {
+                html += `<div class="bulk-item" id="bulk-${s.scan_id}">
+                    <span class="bulk-url">${escapeHtml(s.url)}</span>
+                    <span class="bulk-status running">SCANNING</span>
+                    <span class="bulk-view" style="display:none" onclick="viewBulkResult('${s.scan_id}')">VIEW →</span>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        async function pollBulkScans(scans) {
+            const pending = new Set(scans.map(s => s.scan_id));
+            for (let i = 0; i < 90 && pending.size > 0; i++) {
+                await new Promise(r => setTimeout(r, 3000));
+                for (const scanId of [...pending]) {
+                    try {
+                        const resp = await fetch(`/scan/${scanId}/status`);
+                        const data = await resp.json();
+                        const el = document.getElementById(`bulk-${scanId}`);
+                        if (!el) continue;
+                        const statusEl = el.querySelector('.bulk-status');
+                        const viewEl = el.querySelector('.bulk-view');
+                        if (data.status === 'complete') {
+                            statusEl.textContent = `✓ ${data.result.total_findings} findings`;
+                            statusEl.className = 'bulk-status complete';
+                            viewEl.style.display = 'inline';
+                            pending.delete(scanId);
+                        } else if (data.status === 'error') {
+                            statusEl.textContent = 'ERROR';
+                            statusEl.className = 'bulk-status error';
+                            pending.delete(scanId);
+                        }
+                    } catch (e) {}
+                }
+            }
+            if (pending.size === 0) {
+                showToast('✓ Bulk scan complete!');
+                loadHistory();
+            }
+        }
+
+        function viewBulkResult(scanId) {
+            fetch(`/scan/${scanId}/details`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) { showToast('✗ ' + data.error, 3000); return; }
+                    switchScanTab('single');
+                    renderResults(data);
+                })
+                .catch(err => showToast('✗ Error loading results', 3000));
+        }
+
+        // ===== v4.0 - SCAN HISTORY =====
+        async function loadHistory() {
+            try {
+                const resp = await fetch('/history');
+                const history = await resp.json();
+                const container = document.getElementById('historyList');
+                if (!history.length) {
+                    container.innerHTML = '<div class="history-empty">No scan history yet. Run your first scan!</div>';
+                    return;
+                }
+                let html = '';
+                for (const item of history.reverse()) {
+                    const date = new Date(item.date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const riskColor = item.risk_score >= 7 ? 'var(--danger)' : item.risk_score >= 4 ? 'var(--accent)' : 'var(--primary)';
+                    html += `<div class="history-item" onclick="loadHistoryScan('${item.scan_id}')">
+                        <span class="h-url">${escapeHtml(item.url)}</span>
+                        <span class="h-findings">${item.findings} findings</span>
+                        <span class="h-risk" style="color:${riskColor}">${item.risk_score}/10</span>
+                        <span class="h-date">${date}</span>
+                    </div>`;
+                }
+                container.innerHTML = html;
+            } catch (e) {}
+        }
+
+        async function clearHistory() {
+            try {
+                await fetch('/history/clear', { method: 'POST' });
+                document.getElementById('historyList').innerHTML = '<div class="history-empty">History cleared.</div>';
+                showToast('✓ History cleared');
+            } catch (e) {}
+        }
+
+        function loadHistoryScan(scanId) {
+            fetch(`/scan/${scanId}/details`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast('⚠ Scan results no longer in memory (server restart clears them)', 4000);
+                        return;
+                    }
+                    renderResults(data);
+                    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+                })
+                .catch(() => showToast('⚠ Could not load scan results', 3000));
+        }
+
+        // ===== v4.0 - CT LOGS & REPUTATION RENDER =====
+        function renderCTLogs(ct) {
+            if (!ct || !Object.keys(ct).length || ct.error) return '';
+            let html = `<div class="panel-card"><div class="panel-title">📜 CERTIFICATE TRANSPARENCY</div>`;
+            html += '<div class="info-grid">';
+            html += `<div class="info-item"><div class="label">Total Certificates</div><div class="value">${ct.total_certs || 0}</div></div>`;
+            html += `<div class="info-item"><div class="label">Subdomains via CT</div><div class="value" style="color:var(--primary)">${ct.subdomains_count || 0}</div></div>`;
+            html += `<div class="info-item"><div class="label">Earliest Cert</div><div class="value">${escapeHtml(ct.earliest_cert || 'N/A')}</div></div>`;
+            html += `<div class="info-item"><div class="label">Latest Cert</div><div class="value">${escapeHtml(ct.latest_cert || 'N/A')}</div></div>`;
+            html += '</div>';
+            if (ct.subdomains_found && ct.subdomains_found.length) {
+                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+                    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-family:var(--font-mono);">CT SUBDOMAINS (${ct.subdomains_found.length})</div>
+                    <div class="subdomain-grid">`;
+                for (const sub of ct.subdomains_found.slice(0, 20)) {
+                    html += `<div class="subdomain-item"><span class="sub-name">${escapeHtml(sub)}</span></div>`;
+                }
+                html += '</div></div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderReputation(rep) {
+            if (!rep || !Object.keys(rep).length || rep.error) return '';
+            let html = `<div class="panel-card"><div class="panel-title">🛡️ DOMAIN REPUTATION</div>`;
+            const gsb = rep.google_safe_browsing || 'unknown';
+            const gsbColor = gsb === 'clean' ? 'var(--primary)' : gsb === 'flagged' ? 'var(--danger)' : 'var(--muted)';
+            const gsbIcon = gsb === 'clean' ? '✓' : gsb === 'flagged' ? '⚠' : '?';
+            html += '<div class="info-grid">';
+            html += `<div class="info-item"><div class="label">Google Safe Browsing</div><div class="value" style="color:${gsbColor}">${gsbIcon} ${gsb.toUpperCase()}</div></div>`;
+            html += `<div class="info-item"><div class="label">URLScan Submitted</div><div class="value">${rep.urlscan_submitted ? '✓ Yes' : '✗ No'}</div></div>`;
+            if (rep.urlscan_url) {
+                html += `<div class="info-item"><div class="label">URLScan Report</div><div class="value"><a href="${escapeHtml(rep.urlscan_url)}" target="_blank" style="color:var(--primary);text-decoration:none;font-size:11px;">View →</a></div></div>`;
+            }
+            html += '</div></div>';
+            return html;
+        }
+
+        function renderCVE(cveFindings) {
+            if (!cveFindings || !cveFindings.length) return '';
+            let html = `<div class="panel-card"><div class="panel-title">🔴 CVE DATABASE MATCHES</div>`;
+            html += '<div style="margin-bottom:8px;color:var(--danger);font-size:12px;font-family:var(--font-mono);font-weight:600;">⚠ Known Vulnerabilities Detected</div>';
+            for (const cve of cveFindings) {
+                html += `<div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px 16px;margin-bottom:8px;">
+                    <div style="color:var(--danger);font-weight:700;font-size:13px;margin-bottom:4px;">${escapeHtml(cve.software || '')} ${escapeHtml(cve.version || '')}</div>
+                    <div style="color:var(--text);font-size:12px;margin-bottom:6px;">${escapeHtml(cve.description || '')}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">`;
+                if (cve.cves) {
+                    for (const c of cve.cves) {
+                        html += `<a href="https://nvd.nist.gov/vuln/detail/${c}" target="_blank" style="background:rgba(239,68,68,0.1);color:var(--danger);padding:2px 8px;border-radius:4px;font-size:10px;text-decoration:none;font-family:var(--font-mono);">${c}</a>`;
+                    }
+                }
+                html += `</div>
+                    <div style="color:var(--primary);font-size:11px;margin-top:6px;font-family:var(--font-mono);">FIX: ${escapeHtml(cve.recommendation || '')}</div>
+                </div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        // Load history on page load
+        document.addEventListener('DOMContentLoaded', loadHistory);
     </script>
 </body>
 </html>

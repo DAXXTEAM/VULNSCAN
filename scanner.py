@@ -1953,6 +1953,236 @@ def check_wayback(url):
     return findings, wayback_detail
 
 
+# ===================== CVE DATABASE CHECK =====================
+
+def check_cve(tech_detail):
+    """Check detected versions against known CVEs"""
+    CVE_DB = {
+        'php/7.3': ['CVE-2021-21703', 'CVE-2022-31625', 'CVE-2022-31626'],
+        'php/7.4': ['CVE-2022-31625', 'CVE-2022-31626'],
+        'php/8.0': ['CVE-2022-31625'],
+        'apache/2.4.49': ['CVE-2021-41773', 'CVE-2021-42013'],
+        'apache/2.4.50': ['CVE-2021-42013'],
+        'apache/2.4.51': ['CVE-2021-44790'],
+        'openssl/1.0': ['CVE-2016-0800', 'CVE-2014-0160'],
+        'openssl/1.1.0': ['CVE-2017-3735', 'CVE-2017-3736'],
+        'wordpress/5.0': ['CVE-2019-8942', 'CVE-2019-8943'],
+        'wordpress/5.1': ['CVE-2019-8942'],
+        'wordpress/5.2': ['CVE-2019-17671', 'CVE-2019-17672'],
+        'jquery/1.': ['CVE-2020-11022', 'CVE-2020-11023', 'CVE-2015-9251'],
+        'jquery/2.': ['CVE-2020-11022', 'CVE-2020-11023'],
+        'jquery/3.0': ['CVE-2020-11022', 'CVE-2020-11023'],
+        'jquery/3.1': ['CVE-2020-11022', 'CVE-2020-11023'],
+        'jquery/3.2': ['CVE-2020-11022', 'CVE-2020-11023'],
+        'jquery/3.3': ['CVE-2020-11022', 'CVE-2020-11023'],
+        'jquery/3.4': ['CVE-2020-11022', 'CVE-2020-11023'],
+        'angular/1.': ['CVE-2020-7676', 'CVE-2019-14863'],
+        'nginx/1.14': ['CVE-2019-9511', 'CVE-2019-9513', 'CVE-2019-9516'],
+        'nginx/1.16': ['CVE-2019-9511', 'CVE-2019-9516'],
+        'iis/7.5': ['CVE-2017-7269', 'CVE-2014-4078'],
+        'iis/8.0': ['CVE-2014-4078'],
+    }
+    findings = []
+
+    # Build tech_stack from tech_detail
+    tech_stack = {}
+    if tech_detail.get('php_version'):
+        tech_stack['PHP'] = tech_detail['php_version']
+    if tech_detail.get('server'):
+        server = tech_detail['server']
+        # Extract Apache version
+        import re as _re
+        apache_match = _re.search(r'Apache[/ ]?([\d.]+)', server)
+        if apache_match:
+            tech_stack['Apache'] = apache_match.group(1)
+        nginx_match = _re.search(r'nginx[/ ]?([\d.]+)', server)
+        if nginx_match:
+            tech_stack['nginx'] = nginx_match.group(1)
+        iis_match = _re.search(r'IIS[/ ]?([\d.]+)', server, _re.IGNORECASE)
+        if iis_match:
+            tech_stack['IIS'] = iis_match.group(1)
+    if tech_detail.get('cms_version') and tech_detail.get('cms'):
+        tech_stack[tech_detail['cms']] = tech_detail['cms_version']
+    if tech_detail.get('jquery_version'):
+        tech_stack['jQuery'] = tech_detail['jquery_version']
+    if tech_detail.get('angular_version'):
+        tech_stack['Angular'] = tech_detail['angular_version']
+    if tech_detail.get('powered_by'):
+        openssl_match = re.search(r'OpenSSL[/ ]?([\d.]+)', tech_detail['powered_by'])
+        if openssl_match:
+            tech_stack['OpenSSL'] = openssl_match.group(1)
+
+    for tech, version in tech_stack.items():
+        key = f"{tech.lower()}/{version.lower()}"
+        for db_key, cves in CVE_DB.items():
+            if db_key in key or key.startswith(db_key):
+                findings.append({
+                    'severity': 'critical',
+                    'cvss_score': 9.8,
+                    'title': f'{tech} {version} - Known CVEs Detected',
+                    'description': f'Detected {tech} version {version} has {len(cves)} known CVE(s): {", ".join(cves)}',
+                    'affected_url': '',
+                    'recommendation': f'Upgrade {tech} to the latest stable version immediately. Known vulnerabilities: {", ".join(cves)}',
+                    'category': 'CVE Database',
+                    'cves': cves,
+                    'software': tech,
+                    'version': version
+                })
+                break
+
+    return findings
+
+
+# ===================== REPUTATION CHECK =====================
+
+def check_reputation(domain):
+    """Check domain reputation via urlscan.io and Google Safe Browsing transparency"""
+    findings = []
+    reputation_detail = {}
+    try:
+        # urlscan.io submission (free, no key needed for public scans)
+        try:
+            headers = {'Content-Type': 'application/json'}
+            r = requests.post('https://urlscan.io/api/v1/scan/',
+                headers=headers,
+                json={'url': f'https://{domain}', 'visibility': 'public'},
+                timeout=10)
+            reputation_detail['urlscan_submitted'] = r.status_code == 200
+            if r.status_code == 200:
+                reputation_detail['urlscan_uuid'] = r.json().get('uuid', '')
+                reputation_detail['urlscan_url'] = r.json().get('result', '')
+        except Exception:
+            reputation_detail['urlscan_submitted'] = False
+
+        # Google Safe Browsing Transparency Report (public endpoint)
+        try:
+            gsb = requests.get(
+                f'https://transparencyreport.google.com/transparencyreport/api/v3/safebrowsing/status?site={domain}',
+                timeout=8)
+            if gsb.status_code == 200:
+                text_lower = gsb.text.lower()
+                if 'no unsafe content found' in text_lower or 'no available data' in text_lower:
+                    reputation_detail['google_safe_browsing'] = 'clean'
+                elif 'unsafe' in text_lower or 'dangerous' in text_lower:
+                    reputation_detail['google_safe_browsing'] = 'flagged'
+                else:
+                    reputation_detail['google_safe_browsing'] = 'unknown'
+            else:
+                reputation_detail['google_safe_browsing'] = 'check_failed'
+        except Exception:
+            reputation_detail['google_safe_browsing'] = 'check_failed'
+
+        # Determine severity
+        gsb_status = reputation_detail.get('google_safe_browsing', 'unknown')
+        if gsb_status == 'flagged':
+            findings.append({
+                "severity": "critical",
+                "cvss_score": 9.0,
+                "title": "Domain Flagged by Google Safe Browsing",
+                "description": f"Domain {domain} has been flagged as potentially unsafe by Google Safe Browsing.",
+                "affected_url": f"https://{domain}",
+                "recommendation": "Investigate and remediate any malicious content. Request review from Google Search Console.",
+                "category": "Reputation"
+            })
+        else:
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "Domain Reputation Check",
+                "description": f"Google Safe Browsing: {gsb_status}. URLScan submitted: {reputation_detail.get('urlscan_submitted', False)}.",
+                "affected_url": f"https://{domain}",
+                "recommendation": "Continue monitoring domain reputation regularly.",
+                "category": "Reputation"
+            })
+
+    except Exception as e:
+        reputation_detail['error'] = str(e)[:100]
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "Reputation Check Failed",
+            "description": f"Could not complete reputation check: {str(e)[:100]}",
+            "affected_url": f"https://{domain}",
+            "recommendation": "Manually verify domain reputation.",
+            "category": "Reputation"
+        })
+
+    return findings, reputation_detail
+
+
+# ===================== CERTIFICATE TRANSPARENCY LOGS =====================
+
+def check_cert_transparency(domain):
+    """Find subdomains and certificates via Certificate Transparency logs (crt.sh)"""
+    findings = []
+    ct_detail = {}
+    try:
+        base = domain.replace('www.', '')
+        r = requests.get(f'https://crt.sh/?q=%.{base}&output=json', timeout=15)
+        if r.status_code == 200:
+            certs = r.json()
+            subdomains = set()
+            for cert in certs[:100]:
+                name = cert.get('name_value', '')
+                for sub in name.split('\n'):
+                    sub = sub.strip().replace('*.', '')
+                    if base in sub and sub != base:
+                        subdomains.add(sub)
+
+            ct_detail = {
+                'total_certs': len(certs),
+                'subdomains_found': sorted(list(subdomains))[:30],
+                'subdomains_count': len(subdomains),
+                'earliest_cert': certs[-1].get('not_before', '') if certs else '',
+                'latest_cert': certs[0].get('not_before', '') if certs else '',
+            }
+
+            if subdomains:
+                findings.append({
+                    "severity": "info",
+                    "cvss_score": 0.0,
+                    "title": f"Certificate Transparency: {len(subdomains)} Subdomains Found",
+                    "description": f"Found {len(subdomains)} unique subdomains via CT logs from {len(certs)} certificates. Latest cert: {ct_detail['latest_cert']}",
+                    "affected_url": f"https://{domain}",
+                    "recommendation": "Review CT-discovered subdomains. Ensure all are intentional and properly secured.",
+                    "category": "Certificate Transparency"
+                })
+            else:
+                findings.append({
+                    "severity": "info",
+                    "cvss_score": 0.0,
+                    "title": "Certificate Transparency: No Extra Subdomains",
+                    "description": f"Found {len(certs)} certificates but no additional subdomains via CT logs.",
+                    "affected_url": f"https://{domain}",
+                    "recommendation": "No action needed.",
+                    "category": "Certificate Transparency"
+                })
+        else:
+            ct_detail = {'error': f'crt.sh returned status {r.status_code}'}
+            findings.append({
+                "severity": "info",
+                "cvss_score": 0.0,
+                "title": "Certificate Transparency Check Failed",
+                "description": f"crt.sh returned HTTP {r.status_code}.",
+                "affected_url": f"https://{domain}",
+                "recommendation": "crt.sh may be temporarily unavailable. Try again later.",
+                "category": "Certificate Transparency"
+            })
+    except Exception as e:
+        ct_detail = {'error': str(e)[:100]}
+        findings.append({
+            "severity": "info",
+            "cvss_score": 0.0,
+            "title": "Certificate Transparency Check Failed",
+            "description": f"Error querying CT logs: {str(e)[:100]}",
+            "affected_url": f"https://{domain}",
+            "recommendation": "crt.sh may be temporarily unavailable.",
+            "category": "Certificate Transparency"
+        })
+
+    return findings, ct_detail
+
+
 # ===================== MAIN SCAN FUNCTION =====================
 
 def run_scan(url):
@@ -1984,6 +2214,10 @@ def run_scan(url):
         "http_methods": [],
         "social_presence": {},
         "wayback_detail": {},
+        # v4.0 additions
+        "reputation_detail": {},
+        "ct_detail": {},
+        "cve_findings": [],
     }
 
     # Run checks that return (findings, detail)
@@ -2080,9 +2314,20 @@ def run_scan(url):
         f, d = check_social_presence(url)
         return "Social Presence", f, ("social_presence", d)
 
+
     def run_wayback():
         f, d = check_wayback(url)
         return "Wayback Machine", f, ("wayback_detail", d)
+
+    def run_reputation():
+        domain = get_domain(url)
+        f, d = check_reputation(domain)
+        return "Reputation", f, ("reputation_detail", d)
+
+    def run_ct():
+        domain = get_domain(url)
+        f, d = check_cert_transparency(domain)
+        return "Certificate Transparency", f, ("ct_detail", d)
 
     checks = [
         run_headers, run_ssl, run_tech, run_exposed, run_dns,
@@ -2093,6 +2338,8 @@ def run_scan(url):
         run_whois, run_geo, run_subdomains, run_content,
         run_performance, run_email_security, run_http_methods,
         run_social_presence, run_wayback,
+        # v4.0 modules
+        run_reputation, run_ct,
     ]
 
     progress = []
@@ -2119,6 +2366,16 @@ def run_scan(url):
 
             except Exception as e:
                 progress.append({"check": func_name, "status": "error", "error": str(e)[:100]})
+
+    # Post-processing: CVE check based on detected tech
+    try:
+        cve_findings = check_cve(details.get("tech_detail", {}))
+        if cve_findings:
+            all_findings.extend(cve_findings)
+            details["cve_findings"] = cve_findings
+            progress.append({"check": "CVE Database", "status": "done", "findings": len(cve_findings)})
+    except Exception:
+        pass
 
     elapsed = round(time.time() - start_time, 2)
 
