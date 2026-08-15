@@ -1083,6 +1083,28 @@
             .dl-btn { width: 100%; text-align: center; }
             .download-btns { flex-direction: column; }
         }
+
+        /* Overflow & word-wrap fixes */
+        .results-section { overflow-x: hidden; }
+        .url, code, pre, .mono {
+            word-break: break-all;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        table {
+            width: 100%;
+            table-layout: fixed;
+            overflow-x: auto;
+            display: block;
+        }
+        td, th {
+            word-wrap: break-word;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .finding-card { overflow: hidden; }
+        .card-content { overflow-x: auto; }
     </style>
 </head>
 <body>

@@ -762,6 +762,16 @@ def generate_report(scan_results, target_url=None):
             color: #888;
             margin-bottom: 4px;
         }}
+
+        /* Overflow & word-wrap fixes */
+        * {{ box-sizing: border-box; }}
+        body {{ overflow-x: hidden; }}
+        .finding-card {{ page-break-inside: avoid; overflow: hidden; word-wrap: break-word; }}
+        pre, code {{ white-space: pre-wrap; word-break: break-all; overflow-wrap: break-word; }}
+        table {{ width: 100%; table-layout: fixed; }}
+        td, th {{ word-wrap: break-word; overflow-wrap: break-word; }}
+        .url {{ word-break: break-all; font-size: 12px; }}
+        p, li, div {{ overflow-wrap: break-word; word-break: break-word; }}
     </style>
 </head>
 <body>
