@@ -3,38 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>VULNSCAN - Advanced Web Security Scanner</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>VULNSCAN v3.0 — Advanced Web Security Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #030712;
+            --card: #0c1120;
+            --border: #1e2d4a;
+            --primary: #00ff88;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #050510;
-            color: #e0e0e0;
+            font-family: var(--font-ui);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* Toast Notification */
+        /* ═══════════════════════════════════════════ */
+        /* TOAST NOTIFICATION                         */
+        /* ═══════════════════════════════════════════ */
         .toast {
             position: fixed;
-            top: 20px;
+            top: 80px;
             right: 20px;
-            background: #0d0d1f;
-            border: 1px solid #00ff88;
-            border-radius: 12px;
-            padding: 14px 20px;
-            color: #00ff88;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
+            background: var(--card);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: var(--primary);
+            font-size: 13px;
+            font-family: var(--font-mono);
             z-index: 10000;
             opacity: 0;
             transform: translateX(100px);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none;
-            box-shadow: 0 4px 30px rgba(0, 255, 136, 0.15);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 255, 136, 0.1);
+            max-width: 380px;
         }
         .toast.show {
             opacity: 1;
@@ -42,112 +58,160 @@
             pointer-events: auto;
         }
 
-        /* Sticky Header */
-        .header {
+        /* ═══════════════════════════════════════════ */
+        /* STICKY NAVBAR                              */
+        /* ═══════════════════════════════════════════ */
+        .navbar {
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(5, 5, 16, 0.92);
+            background: rgba(3, 7, 18, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid #1a1a3a;
-            padding: 20px 20px;
-            text-align: center;
-        }
-        .header-inner {
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 14px;
-            margin-bottom: 6px;
+            justify-content: space-between;
         }
-        .header-shield {
-            width: 40px;
-            height: 40px;
-            flex-shrink: 0;
-        }
-        .header h1 {
-            font-size: 44px;
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
             font-weight: 700;
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 6px;
-            filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.3));
-        }
-        .version-badge {
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            color: #050510;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
+            font-size: 16px;
+            color: var(--primary);
             letter-spacing: 1px;
-            align-self: flex-start;
-            margin-top: 8px;
         }
-        .header p {
-            color: #555;
+        .nav-brand .version {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--muted);
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .nav-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
             font-size: 12px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            font-weight: 300;
+            font-weight: 500;
+            color: var(--muted);
+            letter-spacing: 1px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+        .status-dot.scanning {
+            background: var(--accent);
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+            animation: statusPulse 0.8s ease-in-out infinite;
+        }
+        .status-dot.complete {
+            background: var(--secondary);
+            box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+        }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .nav-shortcuts {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--font-mono);
+        }
+        .nav-shortcuts kbd {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-size: 10px;
+        }
+        @media (max-width: 768px) {
+            .nav-shortcuts { display: none; }
         }
 
+        /* ═══════════════════════════════════════════ */
+        /* MAIN CONTAINER                             */
+        /* ═══════════════════════════════════════════ */
         .container {
             max-width: 1100px;
             margin: 0 auto;
-            padding: 30px 20px;
+            padding: 0 20px;
             padding-bottom: 100px;
         }
 
-        /* Scan Box */
-        .scan-box {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 16px;
-            padding: 28px;
-            margin-bottom: 28px;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+        /* ═══════════════════════════════════════════ */
+        /* HERO SECTION                               */
+        /* ═══════════════════════════════════════════ */
+        .hero {
+            padding: 60px 0 40px;
+            text-align: center;
         }
-        .input-group {
+        .hero-label {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--primary);
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+        .hero-label::before {
+            content: '> ';
+            color: var(--muted);
+        }
+        .input-wrapper {
             display: flex;
             gap: 12px;
+            max-width: 700px;
+            margin: 0 auto 20px;
             align-items: stretch;
         }
         .url-input {
             flex: 1;
-            background: #050510;
-            border: 2px solid #1a1a3a;
-            border-radius: 12px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
             padding: 16px 20px;
-            font-size: 16px;
+            font-size: 15px;
             color: #fff;
             outline: none;
             transition: all 0.3s ease;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-mono);
             min-width: 0;
         }
         .url-input:focus {
-            border-color: #00ff88;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1), inset 0 0 10px rgba(0, 255, 136, 0.02);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.08), 0 0 60px rgba(0, 255, 136, 0.03);
         }
         .url-input.invalid {
-            border-color: #ff3355;
-            box-shadow: 0 0 15px rgba(255, 51, 85, 0.15);
+            border-color: var(--danger);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.1);
         }
-        .url-input::placeholder { color: #3a3a5a; }
+        .url-input::placeholder { color: #334155; }
         .scan-btn {
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            color: #050510;
+            background: var(--primary);
+            color: var(--bg);
             border: none;
-            border-radius: 12px;
-            padding: 16px 32px;
-            font-size: 14px;
+            border-radius: 8px;
+            padding: 16px 28px;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             transition: all 0.3s;
             text-transform: uppercase;
             white-space: nowrap;
@@ -155,110 +219,157 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-ui);
         }
         .scan-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.35);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
         }
         .scan-btn:disabled {
-            background: #1a1a3a;
-            color: #555;
+            background: var(--border);
+            color: var(--muted);
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
         .scan-btn.scanning {
+            background: var(--accent);
             animation: btnPulse 1.5s ease-in-out infinite;
         }
         @keyframes btnPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
-            50% { box-shadow: 0 0 0 12px rgba(0, 255, 136, 0); }
-        }
-        .scan-btn-icon {
-            width: 18px;
-            height: 18px;
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
         }
 
-        /* Quick Scan Options */
-        .scan-options {
+        /* Scan Mode Chips */
+        .scan-modes {
             display: flex;
             gap: 10px;
-            margin-top: 14px;
+            justify-content: center;
             flex-wrap: wrap;
         }
-        .scan-chip {
+        .mode-chip {
             background: transparent;
-            border: 1px solid #1a1a3a;
-            color: #666;
-            padding: 8px 16px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 18px;
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
             transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-mono);
             user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .scan-chip:hover {
-            border-color: #00ff88;
-            color: #00ff88;
+        .mode-chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
         }
-        .scan-chip.active {
-            background: rgba(0, 255, 136, 0.1);
-            border-color: #00ff88;
-            color: #00ff88;
-            font-weight: 600;
+        .mode-chip.active {
+            background: rgba(0, 255, 136, 0.08);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .mode-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+        }
+        .mode-chip.active .dot {
+            background: currentColor;
         }
 
-        /* Terminal Progress Section */
-        .progress-section { display: none; margin-bottom: 28px; }
+        /* ═══════════════════════════════════════════ */
+        /* TERMINAL WINDOW                            */
+        /* ═══════════════════════════════════════════ */
+        .terminal-section {
+            display: none;
+            margin-bottom: 32px;
+        }
         .terminal-window {
-            background: #0a0a14;
-            border: 1px solid #1a1a3a;
-            border-radius: 12px;
+            background: #040a14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
         }
         .terminal-header {
-            background: #111122;
+            background: #0a1628;
             padding: 10px 16px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+        .terminal-header-left {
+            display: flex;
+            align-items: center;
             gap: 8px;
-            border-bottom: 1px solid #1a1a3a;
         }
-        .terminal-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-        .terminal-dot.red { background: #ff3355; }
-        .terminal-dot.yellow { background: #ffaa00; }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-dot.red { background: #ef4444; }
+        .terminal-dot.yellow { background: #f59e0b; }
         .terminal-dot.green { background: #00ff88; }
         .terminal-title {
-            color: #555;
+            color: var(--muted);
             font-size: 11px;
-            font-family: 'JetBrains Mono', monospace;
-            margin-left: 8px;
-            letter-spacing: 1px;
+            font-family: var(--font-mono);
+            margin-left: 10px;
+            letter-spacing: 0.5px;
         }
+        .terminal-minimize {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 10px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 0.2s;
+        }
+        .terminal-minimize:hover { border-color: var(--primary); color: var(--primary); }
         .terminal-body {
             padding: 18px 20px;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-mono);
             font-size: 13px;
-            color: #00ff88;
-            min-height: 120px;
-            max-height: 200px;
+            color: var(--primary);
+            min-height: 140px;
+            max-height: 240px;
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .terminal-body::-webkit-scrollbar { width: 6px; }
+        .terminal-body::-webkit-scrollbar-track { background: transparent; }
+        .terminal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .terminal-prompt {
+            color: var(--secondary);
+            margin-bottom: 8px;
         }
         .terminal-line {
             margin-bottom: 4px;
             opacity: 0;
             animation: termFadeIn 0.3s forwards;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
         }
-        .terminal-line.done { color: #00ff88; }
-        .terminal-line.active { color: #00d4ff; }
-        .terminal-line.waiting { color: #555; }
+        .terminal-line .timestamp {
+            color: var(--muted);
+            font-size: 11px;
+            flex-shrink: 0;
+            min-width: 72px;
+        }
+        .terminal-line .content { flex: 1; }
+        .terminal-line.success .content { color: var(--primary); }
+        .terminal-line.progress .content { color: var(--accent); }
+        .terminal-line.error .content { color: var(--danger); }
+        .terminal-line.info .content { color: var(--secondary); }
         @keyframes termFadeIn {
             from { opacity: 0; transform: translateX(-10px); }
             to { opacity: 1; transform: translateX(0); }
@@ -266,11 +377,11 @@
         .terminal-cursor {
             display: inline-block;
             width: 8px;
-            height: 16px;
-            background: #00ff88;
-            margin-left: 4px;
+            height: 15px;
+            background: var(--primary);
             animation: cursorBlink 1s step-end infinite;
             vertical-align: text-bottom;
+            margin-left: 2px;
         }
         @keyframes cursorBlink {
             0%, 50% { opacity: 1; }
@@ -278,31 +389,31 @@
         }
         .progress-bar-bottom {
             height: 3px;
-            background: #1a1a3a;
-            position: relative;
+            background: rgba(30, 45, 74, 0.5);
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             border-radius: 0 3px 3px 0;
             transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             width: 0%;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
         }
 
-        /* Loading Skeleton */
+        /* ═══════════════════════════════════════════ */
+        /* SKELETON LOADING                           */
+        /* ═══════════════════════════════════════════ */
         .skeleton-container { display: none; margin-bottom: 24px; }
         .skeleton-container.show { display: block; }
         .skeleton {
-            background: linear-gradient(90deg, #0d0d1f 25%, #1a1a2a 50%, #0d0d1f 75%);
+            background: linear-gradient(90deg, var(--card) 25%, #152238 50%, var(--card) 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
-            border-radius: 12px;
+            border-radius: 8px;
             margin-bottom: 12px;
         }
         .skeleton-card { height: 80px; }
         .skeleton-row { height: 20px; width: 80%; }
-        .skeleton-row-short { height: 20px; width: 50%; }
         @keyframes shimmer {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
@@ -314,7 +425,9 @@
             margin-bottom: 16px;
         }
 
-        /* Results Section */
+        /* ═══════════════════════════════════════════ */
+        /* RESULTS SECTION                            */
+        /* ═══════════════════════════════════════════ */
         .results-section {
             display: none;
             animation: fadeInUp 0.6s ease forwards;
@@ -324,261 +437,457 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Summary Cards - Premium Design */
-        .summary-wrapper {
-            display: flex;
-            align-items: stretch;
-            gap: 16px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .summary-cards {
+        /* Severity Summary Cards */
+        .severity-cards {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            flex: 1;
+            gap: 14px;
+            margin-bottom: 28px;
         }
-        .summary-card {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 12px;
-            padding: 20px 14px;
+        .sev-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 22px 16px;
             text-align: center;
-            transition: all 0.3s;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s;
         }
-        .summary-card::before {
+        .sev-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 3px;
-            border-radius: 12px 12px 0 0;
         }
-        .summary-card.critical::before { background: #ff3355; }
-        .summary-card.critical { box-shadow: 0 4px 20px rgba(255, 51, 85, 0.1); }
-        .summary-card.critical:hover { box-shadow: 0 4px 30px rgba(255, 51, 85, 0.25); border-color: #ff3355; }
-        .summary-card.high::before { background: #ff6644; }
-        .summary-card.high { box-shadow: 0 4px 20px rgba(255, 102, 68, 0.1); }
-        .summary-card.high:hover { box-shadow: 0 4px 30px rgba(255, 102, 68, 0.25); border-color: #ff6644; }
-        .summary-card.medium::before { background: #ffaa00; }
-        .summary-card.medium { box-shadow: 0 4px 20px rgba(255, 170, 0, 0.1); }
-        .summary-card.medium:hover { box-shadow: 0 4px 30px rgba(255, 170, 0, 0.25); border-color: #ffaa00; }
-        .summary-card.low::before { background: #00d4ff; }
-        .summary-card.low { box-shadow: 0 4px 20px rgba(0, 212, 255, 0.1); }
-        .summary-card.low:hover { box-shadow: 0 4px 30px rgba(0, 212, 255, 0.25); border-color: #00d4ff; }
-        .summary-card .num {
-            font-size: 32px;
+        .sev-card.critical::before { background: var(--danger); }
+        .sev-card.critical:hover { border-color: var(--danger); box-shadow: 0 4px 25px rgba(239, 68, 68, 0.15); }
+        .sev-card.high::before { background: #f97316; }
+        .sev-card.high:hover { border-color: #f97316; box-shadow: 0 4px 25px rgba(249, 115, 22, 0.15); }
+        .sev-card.medium::before { background: var(--accent); }
+        .sev-card.medium:hover { border-color: var(--accent); box-shadow: 0 4px 25px rgba(245, 158, 11, 0.15); }
+        .sev-card.low::before { background: var(--secondary); }
+        .sev-card.low:hover { border-color: var(--secondary); box-shadow: 0 4px 25px rgba(14, 165, 233, 0.15); }
+        .sev-card .num {
+            font-size: 36px;
             font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-mono);
+            line-height: 1;
         }
-        .summary-card .lbl {
+        .sev-card.critical .num { color: var(--danger); }
+        .sev-card.high .num { color: #f97316; }
+        .sev-card.medium .num { color: var(--accent); }
+        .sev-card.low .num { color: var(--secondary); }
+        .sev-card .lbl {
             font-size: 10px;
             text-transform: uppercase;
-            color: #555;
-            margin-top: 6px;
-            letter-spacing: 1.5px;
-            font-weight: 600;
-        }
-
-        /* Risk Gauge */
-        .risk-gauge-card {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 160px;
-        }
-        .risk-gauge {
-            width: 100px;
-            height: 50px;
-            position: relative;
-            overflow: hidden;
-        }
-        .risk-gauge-bg {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 8px solid #1a1a3a;
-            border-bottom-color: transparent;
-            border-left-color: transparent;
-            transform: rotate(225deg);
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        .risk-gauge-fill {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 8px solid transparent;
-            border-top-color: #00ff88;
-            border-right-color: #00ff88;
-            transform: rotate(225deg);
-            position: absolute;
-            top: 0;
-            left: 0;
-            transition: all 0.8s ease;
-        }
-        .risk-gauge-value {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .risk-gauge-label {
-            font-size: 10px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: var(--muted);
             margin-top: 8px;
+            letter-spacing: 2px;
             font-weight: 600;
-        }
-        .total-findings-center {
-            font-size: 11px;
-            color: #888;
-            margin-top: 4px;
         }
 
         /* Risk Banner */
         .risk-banner {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 16px 22px;
-            margin-bottom: 18px;
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
         }
         .risk-badge {
-            padding: 6px 18px;
-            border-radius: 8px;
+            padding: 6px 16px;
+            border-radius: 6px;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
+            font-family: var(--font-mono);
         }
-        .scan-meta { color: #555; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
-
-        /* Actions Bar */
-        .actions-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 22px;
-            flex-wrap: wrap;
-        }
-        .action-btn {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            color: #00ff88;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
+        .scan-meta {
+            color: var(--muted);
             font-size: 12px;
+            font-family: var(--font-mono);
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* TAB NAVIGATION                             */
+        /* ═══════════════════════════════════════════ */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .tab-nav::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
             transition: all 0.3s;
-            text-decoration: none;
-            display: inline-flex;
+            font-family: var(--font-ui);
+            font-weight: 500;
+            white-space: nowrap;
+            display: flex;
             align-items: center;
             gap: 6px;
-            font-family: 'Inter', sans-serif;
-            font-weight: 500;
         }
-        .action-btn:hover {
-            background: #111;
-            border-color: #00ff88;
-            transform: translateY(-1px);
+        .tab-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
         }
-        .action-btn.primary {
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            color: #050510;
-            border-color: transparent;
-            font-weight: 700;
+        .tab-btn.active {
+            background: rgba(0, 255, 136, 0.08);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
         }
-        .action-btn.primary:hover { 
-            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        .tab-btn .badge-count {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--primary);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+        .tab-panel {
+            display: none;
+            animation: fadeInUp 0.4s ease;
+        }
+        .tab-panel.active {
+            display: block;
         }
 
-        /* Accordion Sections */
-        .section-accordion {
-            margin-bottom: 10px;
-            border: 1px solid #1a1a3a;
-            border-radius: 12px;
+        /* ═══════════════════════════════════════════ */
+        /* FINDING CARDS (Terminal monospace style)    */
+        /* ═══════════════════════════════════════════ */
+        .findings-list { display: flex; flex-direction: column; gap: 14px; }
+        .finding-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             overflow: hidden;
+            transition: all 0.3s;
             opacity: 0;
-            transform: translateX(-20px);
-            animation: slideInLeft 0.4s forwards;
+            transform: translateY(10px);
+            animation: staggerFade 0.4s forwards;
         }
-        @keyframes slideInLeft {
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .section-header {
-            background: #0d0d1f;
+        .finding-card:hover { border-color: #2e4066; }
+        .finding-card-header {
             padding: 16px 20px;
             cursor: pointer;
             display: flex;
+            align-items: flex-start;
             justify-content: space-between;
-            align-items: center;
-            transition: background 0.2s;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            gap: 12px;
+            border-left: 4px solid var(--muted);
+            transition: all 0.2s;
         }
-        .section-header:hover { background: #111128; }
-        .section-header:active { background: #0f0f24; }
-        .section-header h3 {
-            font-size: 14px;
+        .finding-card-header.sev-critical { border-left-color: var(--danger); }
+        .finding-card-header.sev-high { border-left-color: #f97316; }
+        .finding-card-header.sev-medium { border-left-color: var(--accent); }
+        .finding-card-header.sev-low { border-left-color: var(--secondary); }
+        .finding-card-header.sev-info { border-left-color: var(--muted); }
+        .finding-left { flex: 1; min-width: 0; }
+        .finding-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .sev-badge {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
             color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: var(--font-mono);
+        }
+        .sev-critical { background: var(--danger); }
+        .sev-high { background: #f97316; }
+        .sev-medium { background: var(--accent); color: #000; }
+        .sev-low { background: var(--secondary); color: #000; }
+        .sev-info { background: #475569; }
+        .cvss-tag {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .cvss-critical { color: var(--danger); }
+        .cvss-high { color: #f97316; }
+        .cvss-medium { color: var(--accent); }
+        .cvss-low { color: var(--secondary); }
+        .cvss-info { color: var(--muted); }
+        .category-tag {
+            font-size: 10px;
+            color: var(--primary);
+            background: rgba(0, 255, 136, 0.06);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+        }
+        .finding-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .finding-hint {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--font-mono);
+        }
+        .finding-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            border-top: 0px solid transparent;
+        }
+        .finding-details.expanded {
+            max-height: 800px;
+            border-top: 1px solid var(--border);
+        }
+        .finding-details-inner {
+            padding: 16px 20px;
+        }
+        .finding-section-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+            margin-top: 14px;
+            font-family: var(--font-mono);
+        }
+        .finding-section-label:first-child { margin-top: 0; }
+        .finding-desc-text {
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.7;
+        }
+        .finding-endpoint {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--primary);
+            background: rgba(0, 255, 136, 0.04);
+            border: 1px solid rgba(0, 255, 136, 0.1);
+            border-radius: 6px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            word-break: break-all;
+        }
+        .finding-fix-box {
+            background: rgba(245, 158, 11, 0.04);
+            border-left: 3px solid var(--accent);
+            padding: 12px 14px;
+            border-radius: 0 6px 6px 0;
+            margin-top: 14px;
+        }
+        .finding-fix-box .fix-label {
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            font-family: var(--font-mono);
+        }
+        .finding-fix-box .fix-text {
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* INFO PANELS (Domain, SSL, Ports, etc)      */
+        /* ═══════════════════════════════════════════ */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+        .info-table tr {
+            border-bottom: 1px solid var(--border);
+        }
+        .info-table tr:last-child { border-bottom: none; }
+        .info-table td {
+            padding: 12px 16px;
+            vertical-align: top;
+        }
+        .info-table td:first-child {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            width: 140px;
+            font-weight: 500;
+        }
+        .info-table td:last-child {
+            color: var(--text);
+            word-break: break-all;
+        }
+        .info-table .val-good { color: var(--primary); }
+        .info-table .val-warn { color: var(--accent); }
+        .info-table .val-bad { color: var(--danger); }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .info-item {
+            background: rgba(12, 17, 32, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .info-item .label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+        .info-item .value {
+            font-size: 13px;
+            color: #fff;
+            font-family: var(--font-mono);
+            word-break: break-all;
+        }
+        .info-item .value.good { color: var(--primary); }
+        .info-item .value.warn { color: var(--accent); }
+        .info-item .value.bad { color: var(--danger); }
+
+        /* SSL Grid */
+        .ssl-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .ssl-item {
+            background: rgba(12, 17, 32, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .ssl-item .label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            font-weight: 500;
+            font-family: var(--font-mono);
+        }
+        .ssl-item .value {
+            font-size: 13px;
+            color: #fff;
+            font-family: var(--font-mono);
+            word-break: break-all;
+        }
+
+        /* Port Badges */
+        .port-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .port-badge {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid var(--primary);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--primary);
+            font-family: var(--font-mono);
+            transition: all 0.2s;
+        }
+        .port-badge:hover { background: rgba(0, 255, 136, 0.1); }
+        .port-badge.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        /* Tech Tags */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tech-tag {
+            background: rgba(0, 255, 136, 0.04);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--primary);
+            font-family: var(--font-mono);
+            transition: all 0.2s;
+        }
+        .tech-tag:hover { border-color: var(--primary); background: rgba(0, 255, 136, 0.08); }
+
+        /* Detail Lists */
+        .detail-list { list-style: none; }
+        .detail-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            color: #94a3b8;
+            font-family: var(--font-mono);
+            word-break: break-all;
             display: flex;
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            font-weight: 600;
         }
-        .section-header .section-icon {
-            font-size: 16px;
-        }
-        .section-header .badge {
-            background: rgba(0, 255, 136, 0.1);
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            color: #00ff88;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-        }
-        .section-header .arrow {
-            transition: transform 0.3s;
-            color: #555;
+        .detail-list li:last-child { border-bottom: none; }
+
+        /* Copy Button */
+        .copy-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 10px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
             flex-shrink: 0;
-            font-size: 12px;
+            font-family: var(--font-mono);
+            letter-spacing: 0.5px;
         }
-        .section-header.open .arrow { transform: rotate(180deg); }
-        .section-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #080818;
-            border-top: 1px solid transparent;
-        }
-        .section-content.open {
-            max-height: 5000px;
-            border-top-color: #1a1a3a;
-        }
-        .section-content-inner {
-            padding: 18px 20px;
-        }
+        .copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .copy-btn.copied { border-color: var(--primary); color: var(--primary); }
 
         /* Headers Table */
         .table-wrapper {
@@ -590,395 +899,206 @@
             width: 100%;
             border-collapse: collapse;
             min-width: 500px;
+            display: table;
+            table-layout: auto;
         }
         .headers-table th, .headers-table td {
             padding: 12px 14px;
             text-align: left;
-            border-bottom: 1px solid #1a1a3a;
+            border-bottom: 1px solid var(--border);
             font-size: 13px;
         }
         .headers-table th {
-            color: #666;
+            color: var(--muted);
             font-weight: 600;
             text-transform: uppercase;
             font-size: 10px;
-            position: sticky;
-            top: 0;
-            background: #080818;
             letter-spacing: 1px;
+            font-family: var(--font-mono);
+            background: rgba(12, 17, 32, 0.5);
         }
-        .check-icon { color: #00ff88; font-size: 18px; }
-        .cross-icon { color: #ff3355; font-size: 18px; }
+        .headers-table td {
+            font-family: var(--font-mono);
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+        .check-icon { color: var(--primary); font-size: 18px; }
+        .cross-icon { color: var(--danger); font-size: 18px; }
 
-        /* Tags */
-        .tech-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .tech-tag {
-            background: rgba(0, 255, 136, 0.05);
-            border: 1px solid #1a1a3a;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #00ff88;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.2s;
-        }
-        .tech-tag:hover { border-color: #00ff88; background: rgba(0, 255, 136, 0.1); }
-
-        /* Lists */
-        .detail-list { list-style: none; }
-        .detail-list li {
-            padding: 10px 0;
-            border-bottom: 1px solid #1a1a3a;
-            font-size: 13px;
-            color: #ccc;
-            font-family: 'JetBrains Mono', monospace;
-            word-break: break-all;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .detail-list li:last-child { border-bottom: none; }
-
-        /* Copy Button */
-        .copy-btn {
-            background: none;
-            border: 1px solid #1a1a3a;
-            color: #555;
-            font-size: 11px;
-            padding: 3px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            font-family: 'Inter', sans-serif;
-        }
-        .copy-btn:hover { border-color: #00ff88; color: #00ff88; }
-        .copy-btn.copied { border-color: #00ff88; color: #00ff88; }
-
-        /* SSL Info */
-        .ssl-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-        }
-        .ssl-item {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 10px;
-            padding: 14px;
-        }
-        .ssl-item .label {
-            font-size: 10px;
-            color: #555;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-        .ssl-item .value {
-            font-size: 13px;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            word-break: break-all;
-        }
-
-        /* Info Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-        }
-        .info-item {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 10px;
-            padding: 14px;
-        }
-        .info-item .label {
-            font-size: 10px;
-            color: #555;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-        .info-item .value {
-            font-size: 13px;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            word-break: break-all;
-        }
-        .info-item .value.good { color: #00ff88; }
-        .info-item .value.warn { color: #ffaa00; }
-        .info-item .value.bad { color: #ff3355; }
-
-        /* Forms */
-        .form-card {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 10px;
-        }
-        .form-card .form-meta {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 6px;
-            word-break: break-all;
-        }
-        .form-issue {
-            color: #ff3355;
-            font-size: 12px;
-            padding: 2px 0;
-        }
-
-        /* Port badges */
-        .port-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .port-badge {
-            background: rgba(0, 255, 136, 0.05);
-            border: 1px solid #00ff88;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #00ff88;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.2s;
-        }
-        .port-badge:hover { background: rgba(0, 255, 136, 0.1); }
-        .port-badge.danger {
-            border-color: #ff3355;
-            color: #ff3355;
-            background: rgba(255, 51, 85, 0.05);
-        }
-
-        /* Findings - Premium */
-        .findings-list { display: flex; flex-direction: column; gap: 12px; }
-        .finding-card {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 12px;
-            padding: 0;
-            transition: all 0.3s;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateX(-20px);
-            animation: slideInLeft 0.4s forwards;
-        }
-        .finding-card:hover { border-color: #2a2a4a; transform: translateX(2px); }
-        .finding-card-inner {
-            padding: 18px 20px;
-            border-left: 4px solid #555;
-            cursor: pointer;
-        }
-        .finding-card-inner.sev-critical-border { border-left-color: #ff3355; }
-        .finding-card-inner.sev-high-border { border-left-color: #ff6644; }
-        .finding-card-inner.sev-medium-border { border-left-color: #ffaa00; }
-        .finding-card-inner.sev-low-border { border-left-color: #00d4ff; }
-        .finding-card-inner.sev-info-border { border-left-color: #555; }
-        .finding-top {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-        }
-        .sev-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 700;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Inter', sans-serif;
-        }
-        .sev-critical { background: #ff3355; }
-        .sev-high { background: #ff6644; }
-        .sev-medium { background: #ffaa00; color: #000; }
-        .sev-low { background: #00d4ff; color: #000; }
-        .sev-info { background: #333; }
-        .cvss-tag {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
-            background: rgba(0, 0, 0, 0.3);
-        }
-        .cvss-critical { color: #ff3355; }
-        .cvss-high { color: #ff6644; }
-        .cvss-medium { color: #ffaa00; }
-        .cvss-low { color: #00d4ff; }
-        .cvss-info { color: #888; }
-        .category-tag {
-            font-size: 11px;
-            color: #00ff88;
-            background: rgba(0, 255, 136, 0.08);
-            padding: 3px 10px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-        .finding-title { font-size: 14px; color: #fff; margin-bottom: 6px; font-weight: 600; }
-        .finding-desc { 
-            font-size: 13px; color: #888; line-height: 1.6; word-break: break-word;
-            max-height: 0; overflow: hidden; transition: max-height 0.4s ease, margin 0.3s ease;
-            margin-bottom: 0;
-        }
-        .finding-desc.expanded { max-height: 500px; margin-bottom: 12px; }
-        .finding-fix {
-            background: #080818;
-            border-left: 3px solid #ffaa00;
-            padding: 12px 14px;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #ccc;
-            word-break: break-word;
-            max-height: 0; overflow: hidden; transition: max-height 0.4s ease, margin 0.3s ease, padding 0.3s ease;
-            padding: 0 14px;
-            margin: 0;
-        }
-        .finding-fix.expanded { max-height: 300px; padding: 12px 14px; margin-top: 0; }
-        .finding-fix strong { color: #ffaa00; }
-        .finding-expand-hint {
-            font-size: 11px;
-            color: #444;
-            margin-top: 4px;
-            transition: opacity 0.2s;
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            margin-top: 50px;
-            padding: 30px 0;
-            border-top: 1px solid #1a1a3a;
-        }
-        .footer p {
-            color: #333;
-            font-size: 12px;
-            margin-bottom: 6px;
-        }
-        .footer a {
-            color: #00ff88;
-            text-decoration: none;
-            font-size: 12px;
-            transition: color 0.2s;
-        }
-        .footer a:hover { color: #00d4ff; }
-        .no-data { color: #444; font-style: italic; font-size: 13px; padding: 10px 0; }
-
-        /* Sticky Download Button */
-        .sticky-download {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(5, 5, 16, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid #1a1a3a;
-            padding: 14px 20px;
-            display: none;
-            justify-content: center;
-            gap: 10px;
-            z-index: 1000;
-        }
-        .sticky-download.show {
-            display: flex;
-        }
-        .sticky-download .action-btn {
-            font-size: 13px;
-            padding: 12px 22px;
-        }
-
-        /* Scan Another Button */
-        .scan-another-box {
-            display: none;
-            text-align: center;
-            margin: 28px 0;
-            padding: 24px;
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 14px;
-        }
-        .scan-another-box.show { display: block; }
-        .scan-another-btn {
-            background: transparent;
-            border: 2px solid #00ff88;
-            color: #00ff88;
-            padding: 12px 28px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
-        }
-        .scan-another-btn:hover {
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            color: #050510;
-            border-color: transparent;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
-        }
-
-        /* Subdomain list */
+        /* Subdomain Grid */
         .subdomain-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 8px;
         }
         .subdomain-item {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 8px;
+            background: rgba(12, 17, 32, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 6px;
             padding: 10px 14px;
             font-size: 12px;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-mono);
             display: flex;
             justify-content: space-between;
             align-items: center;
             transition: border-color 0.2s;
         }
-        .subdomain-item:hover { border-color: #00ff88; }
-        .subdomain-item .sub-name { color: #00ff88; }
-        .subdomain-item .sub-ip { color: #555; }
+        .subdomain-item:hover { border-color: var(--primary); }
+        .subdomain-item .sub-name { color: var(--primary); }
+        .subdomain-item .sub-ip { color: var(--muted); }
 
-        /* Social presence */
+        /* Social Grid */
         .social-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
         }
         .social-item {
-            background: #0d0d1f;
-            border: 1px solid #1a1a3a;
-            border-radius: 10px;
+            background: rgba(12, 17, 32, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             padding: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
             transition: border-color 0.2s;
         }
-        .social-item:hover { border-color: #2a2a4a; }
+        .social-item:hover { border-color: #2e4066; }
         .social-item .platform { color: #fff; font-weight: 600; text-transform: capitalize; font-size: 13px; }
-        .social-item .status-dot {
+        .social-item .sdot {
             width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
         }
-        .social-item .status-dot.found { background: #00ff88; box-shadow: 0 0 8px rgba(0, 255, 136, 0.5); }
-        .social-item .status-dot.not-found { background: #ff3355; }
+        .social-item .sdot.found { background: var(--primary); box-shadow: 0 0 8px rgba(0, 255, 136, 0.5); }
+        .social-item .sdot.not-found { background: var(--danger); }
 
-        /* Stagger animation for cards */
+        /* Form Cards */
+        .form-card {
+            background: rgba(12, 17, 32, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .form-card .form-meta {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            word-break: break-all;
+            font-family: var(--font-mono);
+        }
+        .form-issue {
+            color: var(--danger);
+            font-size: 12px;
+            padding: 2px 0;
+        }
+
+        /* No Data */
+        .no-data {
+            color: var(--muted);
+            font-style: italic;
+            font-size: 13px;
+            padding: 10px 0;
+        }
+
+        /* Panel Wrapper */
+        .panel-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            font-family: var(--font-mono);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* STICKY BOTTOM BAR                          */
+        /* ═══════════════════════════════════════════ */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(3, 7, 18, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 12px 24px;
+            display: none;
+            justify-content: center;
+            gap: 12px;
+            z-index: 1000;
+            flex-wrap: wrap;
+        }
+        .bottom-bar.show { display: flex; }
+        .bar-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: var(--font-mono);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .bar-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.1);
+        }
+        .bar-btn.primary {
+            background: var(--primary);
+            color: var(--bg);
+            border-color: var(--primary);
+        }
+        .bar-btn.primary:hover {
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* FOOTER                                     */
+        /* ═══════════════════════════════════════════ */
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px 0;
+            border-top: 1px solid var(--border);
+        }
+        .footer p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 6px;
+            font-family: var(--font-mono);
+        }
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 12px;
+            font-family: var(--font-mono);
+            transition: color 0.2s;
+        }
+        .footer a:hover { color: var(--secondary); }
+
+        /* ═══════════════════════════════════════════ */
+        /* ANIMATIONS                                 */
+        /* ═══════════════════════════════════════════ */
         .stagger-in {
             opacity: 0;
             transform: translateY(20px);
@@ -987,190 +1107,120 @@
         @keyframes staggerFade {
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 900px) {
-            .summary-cards { grid-template-columns: repeat(2, 1fr); }
-            .summary-wrapper { flex-direction: column; }
-            .risk-gauge-card { flex-direction: row; gap: 20px; min-width: auto; }
-            .ssl-grid { grid-template-columns: repeat(2, 1fr); }
-            .info-grid { grid-template-columns: repeat(2, 1fr); }
-            .skeleton-grid { grid-template-columns: repeat(3, 1fr); }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
+        /* ═══════════════════════════════════════════ */
+        /* RESPONSIVE                                 */
+        /* ═══════════════════════════════════════════ */
+        @media (max-width: 900px) {
+            .severity-cards { grid-template-columns: repeat(2, 1fr); }
+            .info-grid { grid-template-columns: repeat(2, 1fr); }
+            .ssl-grid { grid-template-columns: repeat(2, 1fr); }
+            .skeleton-grid { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 768px) {
-            .header h1 { font-size: 32px; letter-spacing: 3px; }
-            .header p { font-size: 10px; letter-spacing: 1.5px; }
-            .header { padding: 14px 16px; }
-            .header-shield { width: 30px; height: 30px; }
-            .container { padding: 16px 12px; padding-bottom: 90px; }
-            .scan-box { padding: 18px; }
-            .input-group { flex-direction: column; }
-            .scan-btn { width: 100%; padding: 16px; justify-content: center; }
-            .url-input { padding: 14px 16px; font-size: 14px; }
-            .summary-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
-            .summary-card { padding: 16px 10px; }
-            .summary-card .num { font-size: 26px; }
-            .summary-card .lbl { font-size: 9px; }
-            .risk-banner { flex-direction: column; align-items: flex-start; padding: 14px 16px; }
-            .actions-bar { flex-direction: column; }
-            .action-btn { width: 100%; justify-content: center; padding: 12px; }
-            .section-header { padding: 14px 16px; }
-            .section-header h3 { font-size: 13px; gap: 6px; }
-            .section-content-inner { padding: 14px 16px; }
-            .finding-card-inner { padding: 14px 16px; }
-            .finding-title { font-size: 13px; }
-            .finding-desc { font-size: 12px; }
-            .ssl-grid { grid-template-columns: 1fr; }
+            .hero { padding: 40px 0 30px; }
+            .hero-label { font-size: 12px; }
+            .container { padding: 0 12px; padding-bottom: 90px; }
+            .input-wrapper { flex-direction: column; }
+            .scan-btn { width: 100%; justify-content: center; padding: 16px; }
+            .url-input { font-size: 14px; padding: 14px 16px; }
+            .severity-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .sev-card { padding: 16px 12px; }
+            .sev-card .num { font-size: 28px; }
+            .risk-banner { flex-direction: column; align-items: flex-start; }
+            .tab-nav { gap: 6px; }
+            .tab-btn { padding: 8px 12px; font-size: 11px; }
+            .terminal-body { font-size: 11px; min-height: 100px; }
+            .finding-card-header { padding: 14px 16px; }
+            .finding-details-inner { padding: 14px 16px; }
+            .info-table td:first-child { width: 100px; font-size: 10px; }
             .info-grid { grid-template-columns: 1fr; }
-            .skeleton-grid { grid-template-columns: 1fr 1fr; }
-            .toast { right: 12px; left: 12px; top: 12px; }
-            .terminal-body { font-size: 11px; min-height: 80px; }
-            .sticky-download { padding: 10px 12px; }
-            .sticky-download .action-btn { font-size: 12px; padding: 10px 14px; flex: 1; }
+            .ssl-grid { grid-template-columns: 1fr; }
             .subdomain-grid { grid-template-columns: 1fr; }
             .social-grid { grid-template-columns: 1fr; }
-            .scan-options { gap: 8px; }
-            .scan-chip { padding: 6px 12px; font-size: 11px; }
+            .bottom-bar { padding: 10px 12px; gap: 8px; }
+            .bar-btn { padding: 10px 14px; font-size: 11px; flex: 1; justify-content: center; }
+            .toast { right: 12px; left: 12px; top: 68px; max-width: none; }
+            .navbar { padding: 0 12px; }
         }
-
         @media (max-width: 400px) {
-            .header h1 { font-size: 26px; letter-spacing: 2px; }
-            .header-inner { gap: 8px; }
-            .version-badge { font-size: 9px; padding: 2px 6px; }
-            .summary-cards { grid-template-columns: 1fr 1fr; }
-            .summary-card .num { font-size: 22px; }
-            .container { padding: 12px 8px; padding-bottom: 90px; }
-            .scan-box { padding: 14px; border-radius: 10px; }
+            .nav-brand { font-size: 14px; }
+            .sev-card .num { font-size: 24px; }
+            .mode-chip { padding: 6px 12px; font-size: 11px; }
         }
-
-        /* Download Buttons */
-        .download-btns {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 0;
-            width: 100%;
-        }
-        .dl-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            letter-spacing: 1px;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-        .dl-pdf {
-            background: linear-gradient(135deg, #ff3355, #ff6644);
-            color: white;
-        }
-        .dl-html {
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            color: #000;
-        }
-        .dl-view {
-            background: #1a1a3a;
-            color: #00ff88;
-            border: 1px solid #00ff88;
-        }
-        .dl-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-
-        @media (max-width: 768px) {
-            .dl-btn { width: 100%; text-align: center; }
-            .download-btns { flex-direction: column; }
-        }
-
-        /* Overflow & word-wrap fixes */
-        .results-section { overflow-x: hidden; }
-        .url, code, pre, .mono {
-            word-break: break-all;
-            overflow-wrap: break-word;
-            white-space: pre-wrap;
-        }
-        table {
-            width: 100%;
-            table-layout: fixed;
-            overflow-x: auto;
-            display: block;
-        }
-        td, th {
-            word-wrap: break-word;
-            max-width: 300px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .finding-card { overflow: hidden; }
-        .card-content { overflow-x: auto; }
     </style>
 </head>
 <body>
-    <!-- Toast Notification -->
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Sticky Header -->
-    <div class="header">
-        <div class="header-inner">
-            <svg class="header-shield" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L3 7V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V7L12 2Z" fill="url(#shieldGrad)" opacity="0.15"/>
-                <path d="M12 2L3 7V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V7L12 2Z" stroke="url(#shieldGrad)" stroke-width="1.5" fill="none"/>
-                <path d="M9 12L11 14L15 10" stroke="url(#shieldGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <defs>
-                    <linearGradient id="shieldGrad" x1="3" y1="2" x2="21" y2="24">
-                        <stop offset="0%" stop-color="#00ff88"/>
-                        <stop offset="100%" stop-color="#00d4ff"/>
-                    </linearGradient>
-                </defs>
-            </svg>
-            <h1>VULNSCAN</h1>
-            <span class="version-badge">v2.0</span>
+    <!-- Sticky Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            🛡 VULNSCAN <span class="version">v3.0</span>
         </div>
-        <p>Advanced Web Security Scanner</p>
-    </div>
+        <div class="nav-shortcuts">
+            <span><kbd>Enter</kbd> Scan</span>
+            <span><kbd>Esc</kbd> Cancel</span>
+            <span><kbd>Ctrl+D</kbd> Download</span>
+        </div>
+        <div class="nav-status" id="navStatus">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">READY</span>
+        </div>
+    </nav>
 
     <div class="container">
-        <!-- Scan Input -->
-        <div class="scan-box">
-            <div class="input-group">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-label">ENTER TARGET URL</div>
+            <div class="input-wrapper">
                 <input type="text" class="url-input" id="urlInput"
-                       placeholder="Enter target URL (e.g. https://example.com)"
+                       placeholder="https://example.com"
                        autocomplete="off" spellcheck="false">
                 <button class="scan-btn" id="scanBtn" onclick="startScan()">
-                    <svg class="scan-btn-icon" viewBox="0 0 24 24" fill="none">
-                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2.5"/>
-                        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                    </svg>
-                    SCAN TARGET
+                    ⚡ SCAN TARGET
                 </button>
             </div>
-            <div class="scan-options">
-                <span class="scan-chip" data-mode="headers" onclick="selectScanMode(this)">Headers Only</span>
-                <span class="scan-chip active" data-mode="full" onclick="selectScanMode(this)">Full Scan</span>
-                <span class="scan-chip" data-mode="domain" onclick="selectScanMode(this)">Domain Info</span>
+            <div class="scan-modes">
+                <span class="mode-chip active" data-mode="full" onclick="selectScanMode(this)">
+                    <span class="dot"></span> FULL SCAN
+                </span>
+                <span class="mode-chip" data-mode="headers" onclick="selectScanMode(this)">
+                    <span class="dot"></span> HEADERS
+                </span>
+                <span class="mode-chip" data-mode="domain" onclick="selectScanMode(this)">
+                    <span class="dot"></span> DOMAIN
+                </span>
             </div>
-        </div>
+        </section>
 
-        <!-- Terminal Progress -->
-        <div class="progress-section" id="progressSection">
+        <!-- Terminal Window -->
+        <section class="terminal-section" id="terminalSection">
             <div class="terminal-window">
                 <div class="terminal-header">
-                    <span class="terminal-dot red"></span>
-                    <span class="terminal-dot yellow"></span>
-                    <span class="terminal-dot green"></span>
-                    <span class="terminal-title">vulnscan — scanning</span>
+                    <div class="terminal-header-left">
+                        <span class="terminal-dot red"></span>
+                        <span class="terminal-dot yellow"></span>
+                        <span class="terminal-dot green"></span>
+                        <span class="terminal-title">TERMINAL — vulnscan@target</span>
+                    </div>
+                    <button class="terminal-minimize" onclick="toggleTerminal()">minimize</button>
                 </div>
                 <div class="terminal-body" id="terminalBody">
+                    <div class="terminal-prompt">vulnscan@target:~$</div>
                 </div>
                 <div class="progress-bar-bottom">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Loading Skeleton -->
+        <!-- Skeleton Loading -->
         <div class="skeleton-container" id="skeletonContainer">
             <div class="skeleton-grid">
                 <div class="skeleton skeleton-card"></div>
@@ -1184,61 +1234,49 @@
             <div class="skeleton" style="height:50px;margin-bottom:10px;"></div>
         </div>
 
-        <!-- Results -->
-        <div class="results-section" id="resultsSection">
-            <div class="summary-wrapper">
-                <div class="summary-cards" id="summaryCards"></div>
-                <div class="risk-gauge-card" id="riskGaugeCard"></div>
-            </div>
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection">
+            <!-- Severity Cards -->
+            <div class="severity-cards" id="severityCards"></div>
+
+            <!-- Risk Banner -->
             <div class="risk-banner" id="riskBanner"></div>
-            <div class="actions-bar" id="actionsBar"></div>
-            <div id="detailSections"></div>
-            <div class="section-accordion" style="animation-delay: 0.2s;">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3><span class="section-icon">🔍</span> All Findings <span class="badge" id="findingsCount">0</span></h3>
-                    <span class="arrow">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-content-inner">
-                        <div class="findings-list" id="findingsList"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Scan Another -->
-        <div class="scan-another-box" id="scanAnotherBox">
-            <button class="scan-another-btn" onclick="scanAnother()">🔄 Scan Another Target</button>
-        </div>
+            <!-- Tab Navigation -->
+            <div class="tab-nav" id="tabNav"></div>
 
+            <!-- Tab Panels -->
+            <div id="tabPanels"></div>
+        </section>
+
+        <!-- Footer -->
         <div class="footer">
-            <p>Powered by <strong style="color:#00ff88;">VULNSCAN</strong> v2.0 | Built by <strong style="color:#00d4ff;">Arpit Singh</strong></p>
+            <p>Powered by VULNSCAN v3.0 — Built by Arpit Singh</p>
             <a href="https://github.com/DAXXTEAM/VULNSCAN" target="_blank">github.com/DAXXTEAM/VULNSCAN</a>
         </div>
     </div>
 
-    <!-- Sticky Download Bar -->
-    <div class="sticky-download" id="stickyDownload">
-        <div class="download-btns">
-            <button onclick="downloadReport('pdf')" class="dl-btn dl-pdf">
-                ⬇ Download PDF Report
-            </button>
-            <button onclick="downloadReport('html')" class="dl-btn dl-html">
-                ⬇ Download HTML Report
-            </button>
-            <button onclick="if(currentScanId) window.open('/report/' + currentScanId)" class="dl-btn dl-view">
-                👁 View Full Report
-            </button>
-        </div>
+    <!-- Sticky Bottom Bar -->
+    <div class="bottom-bar" id="bottomBar">
+        <button class="bar-btn primary" onclick="downloadReport('pdf')">⬇ PDF REPORT</button>
+        <button class="bar-btn" onclick="downloadReport('html')">⬇ HTML REPORT</button>
+        <button class="bar-btn" onclick="scanAnother()">↩ NEW SCAN</button>
     </div>
-
 
     <script>
         const urlInput = document.getElementById('urlInput');
         let currentScanId = '';
         let selectedScanMode = 'full';
+        let scanStartTime = null;
+        let terminalMinimized = false;
 
-        urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') startScan(); });
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement === urlInput) startScan();
+            if (e.key === 'Escape') cancelScan();
+            if (e.ctrlKey && e.key === 'd') { e.preventDefault(); downloadReport('pdf'); }
+        });
+
         urlInput.addEventListener('input', validateUrlInput);
 
         function validateUrlInput() {
@@ -1257,7 +1295,7 @@
         }
 
         function selectScanMode(el) {
-            document.querySelectorAll('.scan-chip').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.mode-chip').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
             selectedScanMode = el.dataset.mode;
         }
@@ -1269,17 +1307,33 @@
             setTimeout(() => toast.classList.remove('show'), duration);
         }
 
-        function toggleSection(el) {
-            el.classList.toggle('open');
-            const content = el.nextElementSibling;
-            content.classList.toggle('open');
+        function setStatus(status) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            dot.className = 'status-dot';
+            if (status === 'scanning') {
+                dot.classList.add('scanning');
+                text.textContent = 'SCANNING';
+            } else if (status === 'complete') {
+                dot.classList.add('complete');
+                text.textContent = 'COMPLETE';
+            } else {
+                text.textContent = 'READY';
+            }
+        }
+
+        function toggleTerminal() {
+            const body = document.getElementById('terminalBody');
+            terminalMinimized = !terminalMinimized;
+            body.style.display = terminalMinimized ? 'none' : 'block';
         }
 
         function copyToClipboard(text, btn) {
             navigator.clipboard.writeText(text).then(() => {
-                btn.textContent = '✓';
+                btn.textContent = '✓ Copied';
                 btn.classList.add('copied');
-                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+                showToast('✓ Copied!', 1500);
+                setTimeout(() => { btn.textContent = '📋 COPY'; btn.classList.remove('copied'); }, 1500);
             }).catch(() => {
                 const ta = document.createElement('textarea');
                 ta.value = text;
@@ -1287,44 +1341,37 @@
                 ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
-                btn.textContent = '✓';
+                btn.textContent = '✓ Copied';
                 btn.classList.add('copied');
-                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+                showToast('✓ Copied!', 1500);
+                setTimeout(() => { btn.textContent = '📋 COPY'; btn.classList.remove('copied'); }, 1500);
             });
         }
 
-        function toggleFinding(el) {
-            const desc = el.querySelector('.finding-desc');
-            const fix = el.querySelector('.finding-fix');
-            const hint = el.querySelector('.finding-expand-hint');
-            const isExpanded = desc.classList.contains('expanded');
-            desc.classList.toggle('expanded');
-            fix.classList.toggle('expanded');
-            if (hint) hint.textContent = isExpanded ? '▸ Click to expand' : '▾ Click to collapse';
-        }
-
-        function scanAnother() {
-            document.getElementById('resultsSection').style.display = 'none';
-            document.getElementById('scanAnotherBox').classList.remove('show');
-            document.getElementById('stickyDownload').classList.remove('show');
-            urlInput.value = '';
-            urlInput.focus();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        function getElapsedTime() {
+            if (!scanStartTime) return '00:00:00';
+            const elapsed = Math.floor((Date.now() - scanStartTime) / 1000);
+            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
         }
 
         function addTerminalLine(text, status) {
             const body = document.getElementById('terminalBody');
-            const line = document.createElement('div');
-            line.className = 'terminal-line ' + status;
-            const prefix = status === 'done' ? '[✓]' : status === 'active' ? '[~]' : '[○]';
-            line.innerHTML = `<span>${prefix}</span> ${text}`;
-            // Remove old cursor
             const oldCursor = body.querySelector('.terminal-cursor');
             if (oldCursor) oldCursor.remove();
-            // Add cursor to new line
+
+            const line = document.createElement('div');
+            line.className = 'terminal-line ' + status;
+
+            const prefix = status === 'success' ? '✓' : status === 'progress' ? '~' : status === 'error' ? '✗' : '●';
+            line.innerHTML = `<span class="timestamp">[${getElapsedTime()}]</span><span class="content">${prefix} ${text}</span>`;
+
             const cursor = document.createElement('span');
             cursor.className = 'terminal-cursor';
-            line.appendChild(cursor);
+            line.querySelector('.content').appendChild(cursor);
+
             body.appendChild(line);
             body.scrollTop = body.scrollHeight;
         }
@@ -1334,10 +1381,31 @@
             const lines = body.querySelectorAll('.terminal-line');
             if (lines.length) {
                 const last = lines[lines.length - 1];
-                last.classList.remove('active');
-                last.classList.add('done');
-                last.innerHTML = last.innerHTML.replace('[~]', '[✓]').replace('[○]', '[✓]');
+                last.classList.remove('progress');
+                last.classList.add('success');
+                const content = last.querySelector('.content');
+                if (content) content.innerHTML = content.innerHTML.replace('~', '✓');
             }
+        }
+
+        let scanAbortController = null;
+
+        function cancelScan() {
+            if (scanAbortController) {
+                scanAbortController.abort();
+                scanAbortController = null;
+                showToast('⚠ Scan cancelled', 2000);
+                resetScanUI();
+            }
+        }
+
+        function resetScanUI() {
+            const scanBtn = document.getElementById('scanBtn');
+            scanBtn.disabled = false;
+            scanBtn.innerHTML = '⚡ SCAN TARGET';
+            scanBtn.classList.remove('scanning');
+            document.getElementById('skeletonContainer').classList.remove('show');
+            setStatus('ready');
         }
 
         async function startScan() {
@@ -1349,33 +1417,37 @@
                 return;
             }
 
-            // URL validation
             try {
                 const testUrl = new URL(url.startsWith('http') ? url : 'https://' + url);
                 if (!testUrl.hostname.includes('.')) throw new Error('invalid');
             } catch {
                 urlInput.classList.add('invalid');
-                showToast('⚠️ Invalid URL format', 3000);
+                showToast('⚠ Invalid URL format', 3000);
                 return;
             }
 
-            showToast('🚀 Scan initiated for ' + url);
+            scanStartTime = Date.now();
+            scanAbortController = new AbortController();
+
+            showToast('⚡ Scan initiated for ' + url);
+            setStatus('scanning');
 
             const scanBtn = document.getElementById('scanBtn');
             scanBtn.disabled = true;
-            scanBtn.innerHTML = '<svg class="scan-btn-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-dasharray="30 70" style="animation: spin 1s linear infinite;"/></svg> SCANNING...';
+            scanBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" stroke-dasharray="30 70" style="animation: spin 1s linear infinite;"/></svg> SCANNING...';
             scanBtn.classList.add('scanning');
-            document.getElementById('progressSection').style.display = 'block';
-            document.getElementById('terminalBody').innerHTML = '';
+
+            document.getElementById('terminalSection').style.display = 'block';
+            document.getElementById('terminalBody').innerHTML = '<div class="terminal-prompt">vulnscan@target:~$ scan ' + escapeHtml(url) + '</div>';
             document.getElementById('skeletonContainer').classList.add('show');
             document.getElementById('resultsSection').style.display = 'none';
-            document.getElementById('scanAnotherBox').classList.remove('show');
-            document.getElementById('stickyDownload').classList.remove('show');
+            document.getElementById('bottomBar').classList.remove('show');
+            document.getElementById('progressFill').style.width = '0%';
 
             const steps = [
-                'Resolving DNS...', 'Querying WHOIS records...',
+                'Initializing scan engine...', 'Resolving DNS...',
                 'Checking SSL/TLS certificates...', 'Analyzing security headers...',
-                'Detecting technology stack...', 'Scanning exposed paths...',
+                'Detecting technology stack...', 'Scanning exposed paths (166 endpoints)...',
                 'Checking robots.txt & sitemap...', 'Analyzing cookies & CORS...',
                 'Port scanning (21 ports)...', 'Harvesting emails...',
                 'Enumerating subdomains...', 'Analyzing page content...',
@@ -1387,13 +1459,13 @@
             ];
 
             let step = 0;
-            addTerminalLine(steps[0], 'active');
+            addTerminalLine(steps[0], 'progress');
             step++;
 
             const progressInterval = setInterval(() => {
                 if (step < steps.length) {
                     markLastLineDone();
-                    addTerminalLine(steps[step], 'active');
+                    addTerminalLine(steps[step], 'progress');
                     document.getElementById('progressFill').style.width = ((step + 1) / steps.length * 90) + '%';
                     step++;
                 }
@@ -1403,12 +1475,13 @@
                 const response = await fetch('/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
+                    body: JSON.stringify({ url }),
+                    signal: scanAbortController.signal
                 });
 
                 clearInterval(progressInterval);
                 markLastLineDone();
-                addTerminalLine('Scan complete! ✓', 'done');
+                addTerminalLine('Scan complete!', 'success');
                 document.getElementById('progressFill').style.width = '100%';
 
                 const data = await response.json();
@@ -1418,15 +1491,17 @@
                 } else if (data.error && !data.findings) {
                     showError(data.error);
                 } else {
-                    setTimeout(() => renderResults(data), 500);
+                    setTimeout(() => renderResults(data), 400);
                 }
             } catch (err) {
                 clearInterval(progressInterval);
+                if (err.name === 'AbortError') return;
                 showError('Network error: ' + err.message);
             }
 
+            scanAbortController = null;
             scanBtn.disabled = false;
-            scanBtn.innerHTML = '<svg class="scan-btn-icon" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2.5"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> SCAN TARGET';
+            scanBtn.innerHTML = '⚡ SCAN TARGET';
             scanBtn.classList.remove('scanning');
             document.getElementById('skeletonContainer').classList.remove('show');
         }
@@ -1449,22 +1524,30 @@
         }
 
         function showError(msg) {
-            document.getElementById('progressSection').style.display = 'none';
+            setStatus('ready');
+            document.getElementById('terminalSection').style.display = 'none';
             document.getElementById('skeletonContainer').classList.remove('show');
             document.getElementById('resultsSection').style.display = 'block';
-            document.getElementById('summaryCards').innerHTML = '';
-            document.getElementById('riskGaugeCard').innerHTML = '';
-            document.getElementById('riskBanner').innerHTML = `<span style="color:#ff3355">⚠ Error: ${msg}</span>`;
-            document.getElementById('detailSections').innerHTML = '';
-            document.getElementById('findingsList').innerHTML = '';
-            document.getElementById('actionsBar').innerHTML = '';
-            document.getElementById('scanAnotherBox').classList.add('show');
-            showToast('❌ ' + msg, 4000);
+            document.getElementById('severityCards').innerHTML = '';
+            document.getElementById('riskBanner').innerHTML = `<span style="color:var(--danger)">⚠ Error: ${escapeHtml(msg)}</span>`;
+            document.getElementById('tabNav').innerHTML = '';
+            document.getElementById('tabPanels').innerHTML = '';
+            showToast('✗ ' + msg, 4000);
+        }
+
+        function scanAnother() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('bottomBar').classList.remove('show');
+            document.getElementById('terminalSection').style.display = 'none';
+            setStatus('ready');
+            urlInput.value = '';
+            urlInput.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function getRiskColor(level) {
-            const colors = { CRITICAL: '#ff3355', HIGH: '#ff6644', MEDIUM: '#ffaa00', LOW: '#00d4ff', INFORMATIONAL: '#888' };
-            return colors[level] || '#888';
+            const colors = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#f59e0b', LOW: '#0ea5e9', INFORMATIONAL: '#64748b' };
+            return colors[level] || '#64748b';
         }
 
         function getCvssClass(score) {
@@ -1475,200 +1558,188 @@
             return 'cvss-info';
         }
 
-        function getRiskGaugeRotation(level) {
-            const map = { CRITICAL: 0.95, HIGH: 0.75, MEDIUM: 0.5, LOW: 0.25, INFORMATIONAL: 0.1 };
-            return map[level] || 0.1;
+        function toggleFinding(el) {
+            const details = el.closest('.finding-card').querySelector('.finding-details');
+            const hint = el.querySelector('.finding-hint');
+            const isExpanded = details.classList.contains('expanded');
+            details.classList.toggle('expanded');
+            if (hint) hint.textContent = isExpanded ? '▸ Click to expand' : '▾ Click to collapse';
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById('panel-' + tabId).classList.add('active');
         }
 
         function renderResults(data) {
-            document.getElementById('progressSection').style.display = 'none';
             document.getElementById('skeletonContainer').classList.remove('show');
             document.getElementById('resultsSection').style.display = 'block';
-            document.getElementById('scanAnotherBox').classList.add('show');
-            document.getElementById('stickyDownload').classList.add('show');
+            document.getElementById('bottomBar').classList.add('show');
+            setStatus('complete');
 
             currentScanId = data.scan_id;
-            showToast('✅ Scan complete! ' + data.total_findings + ' findings (' + (data.modules_count || 24) + ' modules)');
+            showToast('✓ Scan complete — ' + data.total_findings + ' findings (' + (data.modules_count || 24) + ' modules)');
 
             const riskColor = getRiskColor(data.risk_level);
 
-            // Summary Cards with stagger animation
-            document.getElementById('summaryCards').innerHTML = `
-                <div class="summary-card critical stagger-in" style="animation-delay:0.1s"><div class="num" style="color:#ff3355">${data.stats.critical}</div><div class="lbl">Critical</div></div>
-                <div class="summary-card high stagger-in" style="animation-delay:0.2s"><div class="num" style="color:#ff6644">${data.stats.high}</div><div class="lbl">High</div></div>
-                <div class="summary-card medium stagger-in" style="animation-delay:0.3s"><div class="num" style="color:#ffaa00">${data.stats.medium}</div><div class="lbl">Medium</div></div>
-                <div class="summary-card low stagger-in" style="animation-delay:0.4s"><div class="num" style="color:#00d4ff">${data.stats.low}</div><div class="lbl">Low</div></div>
+            // Severity Cards
+            document.getElementById('severityCards').innerHTML = `
+                <div class="sev-card critical stagger-in" style="animation-delay:0.1s"><div class="num">${data.stats.critical}</div><div class="lbl">Critical</div></div>
+                <div class="sev-card high stagger-in" style="animation-delay:0.2s"><div class="num">${data.stats.high}</div><div class="lbl">High</div></div>
+                <div class="sev-card medium stagger-in" style="animation-delay:0.3s"><div class="num">${data.stats.medium}</div><div class="lbl">Medium</div></div>
+                <div class="sev-card low stagger-in" style="animation-delay:0.4s"><div class="num">${data.stats.low}</div><div class="lbl">Low</div></div>
             `;
 
-            // Risk Gauge
-            const gaugePercent = getRiskGaugeRotation(data.risk_level);
-            const gaugeAngle = gaugePercent * 270;
-            document.getElementById('riskGaugeCard').innerHTML = `
-                <div class="risk-gauge">
-                    <div class="risk-gauge-bg"></div>
-                    <div class="risk-gauge-fill" style="clip-path: none; border-top-color:${riskColor}; border-right-color:${riskColor};"></div>
-                    <div class="risk-gauge-value" style="color:${riskColor}">${data.max_cvss}</div>
-                </div>
-                <div class="risk-gauge-label">Risk Score</div>
-                <div class="total-findings-center">${data.total_findings} total findings</div>
-            `;
-
+            // Risk Banner
             document.getElementById('riskBanner').innerHTML = `
-                <div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                     <span class="risk-badge" style="background:${riskColor};color:#fff">${data.risk_level}</span>
-                    <span style="margin-left:12px;color:#666;font-size:12px;">Max CVSS: ${data.max_cvss} | ${data.modules_count || 24} modules</span>
+                    <span style="color:var(--muted);font-size:12px;font-family:var(--font-mono);">MAX CVSS: ${data.max_cvss} | ${data.modules_count || 24} modules</span>
                 </div>
                 <div class="scan-meta">
-                    ${data.total_findings} findings • ${data.duration_seconds}s • ${data.paths_checked || '100+'} paths
+                    ${data.total_findings} findings • ${data.duration_seconds}s • ${data.paths_checked || '166'} paths
                 </div>
             `;
 
-            document.getElementById('actionsBar').innerHTML = `
-                <a class="action-btn" href="/report/${data.scan_id}" target="_blank">📄 HTML Report</a>
-                <a class="action-btn" href="/report/${data.scan_id}/json" target="_blank">💾 JSON Export</a>
-                <a class="action-btn" href="/scan/${data.scan_id}/details" target="_blank">📋 Full Details</a>
-                <button class="action-btn primary" onclick="downloadReport('pdf')">⬇ PDF Report</button>
-            `;
-
-            let sections = '';
+            // Build tabs
             const details = data.details || {};
+            const tabs = [
+                { id: 'findings', icon: '📋', label: 'Findings', count: data.total_findings },
+                { id: 'domain', icon: '🌐', label: 'Domain', count: '' },
+                { id: 'ssl', icon: '🔒', label: 'SSL', count: '' },
+                { id: 'ports', icon: '🖧', label: 'Ports', count: (details.open_ports || []).length },
+                { id: 'email', icon: '📧', label: 'Email', count: (details.emails || []).length },
+                { id: 'performance', icon: '⚡', label: 'Performance', count: '' },
+                { id: 'content', icon: '📄', label: 'Content', count: '' },
+                { id: 'tech', icon: '⚙️', label: 'Tech', count: (details.tech_list || []).length },
+                { id: 'subdomains', icon: '🔎', label: 'Subdomains', count: (details.subdomains || []).length },
+                { id: 'headers', icon: '🛡️', label: 'Headers', count: '' },
+            ];
 
-            // Domain Intelligence (WHOIS)
+            let tabNavHTML = '';
+            tabs.forEach((t, i) => {
+                const active = i === 0 ? 'active' : '';
+                const badge = t.count !== '' ? `<span class="badge-count">${t.count}</span>` : '';
+                tabNavHTML += `<button class="tab-btn ${active}" data-tab="${t.id}" onclick="switchTab('${t.id}')">${t.icon} ${t.label} ${badge}</button>`;
+            });
+            document.getElementById('tabNav').innerHTML = tabNavHTML;
+
+            // Build panels
+            let panelsHTML = '';
+
+            // Findings panel
+            panelsHTML += `<div id="panel-findings" class="tab-panel active">${renderFindings(data.findings)}</div>`;
+
+            // Domain panel
             const whois = details.whois_detail || {};
-            sections += buildAccordion('🌐', 'Domain Intelligence', whois.registrar ? whois.registrar : '', renderWhois(whois));
-
-            // IP & Location
             const geo = details.geo_detail || {};
-            sections += buildAccordion('📍', 'IP & Location', geo.ip || '', renderGeo(geo));
+            panelsHTML += `<div id="panel-domain" class="tab-panel">
+                <div class="panel-card"><div class="panel-title">🌐 DOMAIN INTELLIGENCE</div>${renderWhois(whois)}</div>
+                <div class="panel-card"><div class="panel-title">📍 IP & GEOLOCATION</div>${renderGeo(geo)}</div>
+                ${renderWayback(details.wayback_detail || {})}
+                ${renderSocialPresence(details.social_presence || {})}
+            </div>`;
 
-            // Open Ports
-            const ports = details.open_ports || [];
-            sections += buildAccordion('🔌', 'Open Ports', `${ports.length} open`, renderPorts(ports));
+            // SSL panel
+            panelsHTML += `<div id="panel-ssl" class="tab-panel"><div class="panel-card"><div class="panel-title">🔒 SSL/TLS CERTIFICATE</div>${renderSSL(details.ssl_detail || {})}</div></div>`;
 
-            // Subdomains
-            const subdomains = details.subdomains || [];
-            sections += buildAccordion('🔎', 'Subdomains', `${subdomains.length} found`, renderSubdomains(subdomains));
+            // Ports panel
+            panelsHTML += `<div id="panel-ports" class="tab-panel"><div class="panel-card"><div class="panel-title">🖧 OPEN PORTS</div>${renderPorts(details.open_ports || [])}</div>
+                <div class="panel-card"><div class="panel-title">🔧 HTTP METHODS</div>${renderHTTPMethods(details.http_methods || [])}</div>
+                <div class="panel-card"><div class="panel-title">📂 EXPOSED FILES</div>${renderExposedFiles(details.exposed_files || [])}</div>
+            </div>`;
 
-            // Content Analysis
-            const content = details.content_detail || {};
-            sections += buildAccordion('📄', 'Content Analysis', content.title ? `"${content.title.substring(0, 30)}..."` : '', renderContent(content));
+            // Email panel
+            panelsHTML += `<div id="panel-email" class="tab-panel">
+                <div class="panel-card"><div class="panel-title">📧 EMAIL SECURITY (SPF/DMARC)</div>${renderEmailSecurity(details.email_security || {})}</div>
+                <div class="panel-card"><div class="panel-title">✉️ EMAILS HARVESTED</div>${renderEmails(details.emails || [])}</div>
+            </div>`;
 
-            // Performance
-            const perf = details.performance_detail || {};
-            sections += buildAccordion('⚡', 'Performance', perf.load_time_seconds ? `${perf.load_time_seconds}s` : '', renderPerformance(perf));
+            // Performance panel
+            panelsHTML += `<div id="panel-performance" class="tab-panel"><div class="panel-card"><div class="panel-title">⚡ PERFORMANCE</div>${renderPerformance(details.performance_detail || {})}</div></div>`;
 
-            // Email Security
-            const emailSec = details.email_security || {};
-            sections += buildAccordion('📧', 'Email Security', '', renderEmailSecurity(emailSec));
+            // Content panel
+            panelsHTML += `<div id="panel-content" class="tab-panel">
+                <div class="panel-card"><div class="panel-title">📄 CONTENT ANALYSIS</div>${renderContent(details.content_detail || {})}</div>
+                <div class="panel-card"><div class="panel-title">📝 FORM ANALYSIS</div>${renderForms(details.forms || [])}</div>
+                <div class="panel-card"><div class="panel-title">🌍 SOCIAL MEDIA LINKS</div>${renderSocial(details.social_links || {})}</div>
+                <div class="panel-card"><div class="panel-title">🔗 EXTERNAL RESOURCES</div>${renderExternal(details.external_domains || [])}</div>
+                <div class="panel-card"><div class="panel-title">📜 JAVASCRIPT FILES</div>${renderJS(details.javascript || [])}</div>
+            </div>`;
 
-            // Archive History
-            const wayback = details.wayback_detail || {};
-            sections += buildAccordion('📚', 'Archive History', wayback.available ? 'Archived' : 'Not found', renderWayback(wayback));
+            // Tech panel
+            panelsHTML += `<div id="panel-tech" class="tab-panel"><div class="panel-card"><div class="panel-title">⚙️ TECHNOLOGY STACK</div>${renderTechStack(details.tech_list || [], details.tech_detail || {})}</div></div>`;
 
-            // Social Presence
-            const socialPresence = details.social_presence || {};
-            const presenceCount = Object.values(socialPresence).filter(v => v.exists).length;
-            sections += buildAccordion('👤', 'Social Presence', `${presenceCount}/${Object.keys(socialPresence).length}`, renderSocialPresence(socialPresence));
+            // Subdomains panel
+            panelsHTML += `<div id="panel-subdomains" class="tab-panel"><div class="panel-card"><div class="panel-title">🔎 SUBDOMAINS</div>${renderSubdomains(details.subdomains || [])}</div></div>`;
 
-            // HTTP Methods
-            const httpMethods = details.http_methods || [];
-            sections += buildAccordion('🔧', 'HTTP Methods', httpMethods.length ? `${httpMethods.length} allowed` : 'Restricted', renderHTTPMethods(httpMethods));
+            // Headers panel
+            panelsHTML += `<div id="panel-headers" class="tab-panel"><div class="panel-card"><div class="panel-title">🛡️ SECURITY HEADERS</div>${renderHeadersTable(details.headers_detail || {})}</div></div>`;
 
-            // Exposed Files
-            const exposedFiles = details.exposed_files || [];
-            const exposed200 = exposedFiles.filter(f => f.status === 200);
-            const exposed403 = exposedFiles.filter(f => f.status === 403);
-            sections += buildAccordion('📂', 'Exposed Files', `${exposed200.length} accessible, ${exposed403.length} forbidden`, renderExposedFiles(exposed200, exposed403));
-
-            // Security Headers
-            sections += buildAccordion('🛡️', 'Security Headers', '', renderHeadersTable(details.headers_detail || {}));
-
-            // Technology Stack
-            const techList = details.tech_list || [];
-            sections += buildAccordion('⚙️', 'Technology Stack', `${techList.length} detected`, renderTechStack(techList, details.tech_detail || {}));
-
-            // SSL/TLS
-            sections += buildAccordion('🔒', 'SSL/TLS Certificate', '', renderSSL(details.ssl_detail || {}));
-
-            // Emails Found
-            const emails = details.emails || [];
-            sections += buildAccordion('✉️', 'Emails Harvested', `${emails.length}`, renderEmails(emails));
-
-            // Form Analysis
-            const forms = details.forms || [];
-            sections += buildAccordion('📝', 'Form Analysis', `${forms.length} forms`, renderForms(forms));
-
-            // Social Media Links
-            const social = details.social_links || {};
-            const socialCount = Object.keys(social).length;
-            sections += buildAccordion('🌍', 'Social Media Links', `${socialCount} platforms`, renderSocial(social));
-
-            // External Resources
-            const extDomains = details.external_domains || [];
-            sections += buildAccordion('🔗', 'External Resources', `${extDomains.length} domains`, renderExternal(extDomains));
-
-            // JavaScript
-            const jsFiles = details.javascript || [];
-            sections += buildAccordion('📜', 'JavaScript Files', `${jsFiles.length} scripts`, renderJS(jsFiles));
-
-            document.getElementById('detailSections').innerHTML = sections;
-
-            // Apply stagger animation to sections
-            const sectionEls = document.querySelectorAll('#detailSections .section-accordion');
-            sectionEls.forEach((el, i) => {
-                el.style.animationDelay = (i * 0.05) + 's';
-            });
-
-            document.getElementById('findingsCount').textContent = data.total_findings;
-            let html = '';
-            data.findings.forEach((f, idx) => {
-                const sevBorder = `sev-${f.severity}-border`;
-                const cvssClass = getCvssClass(f.cvss_score);
-                html += `
-                <div class="finding-card" style="animation-delay:${idx * 0.05}s">
-                    <div class="finding-card-inner ${sevBorder}" onclick="toggleFinding(this)">
-                        <div class="finding-top">
-                            <span class="sev-badge sev-${f.severity}">${f.severity}</span>
-                            <span class="cvss-tag ${cvssClass}">CVSS ${f.cvss_score}</span>
-                            <span class="category-tag">${f.category || ''}</span>
-                        </div>
-                        <div class="finding-title">${escapeHtml(f.title)}</div>
-                        <div class="finding-expand-hint">▸ Click to expand</div>
-                        <div class="finding-desc">${escapeHtml(f.description)}</div>
-                        <div class="finding-fix"><strong>Fix:</strong> ${escapeHtml(f.recommendation)}</div>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('findingsList').innerHTML = html;
+            document.getElementById('tabPanels').innerHTML = panelsHTML;
 
             setTimeout(() => {
                 document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            }, 200);
         }
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        }
-
-        function buildAccordion(icon, title, badge, content) {
-            return `
-            <div class="section-accordion">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3><span class="section-icon">${icon}</span> ${title} ${badge ? `<span class="badge">${escapeHtml(badge)}</span>` : ''}</h3>
-                    <span class="arrow">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-content-inner">${content}</div>
-                </div>
-            </div>`;
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
         // ===== RENDER FUNCTIONS =====
 
+        function renderFindings(findings) {
+            if (!findings || !findings.length) return '<p class="no-data">No findings detected.</p>';
+            let html = '<div class="findings-list">';
+            findings.forEach((f, idx) => {
+                const sevClass = `sev-${f.severity}`;
+                const cvssClass = getCvssClass(f.cvss_score);
+                html += `
+                <div class="finding-card" style="animation-delay:${idx * 0.05}s">
+                    <div class="finding-card-header ${sevClass}" onclick="toggleFinding(this)">
+                        <div class="finding-left">
+                            <div class="finding-badges">
+                                <span class="sev-badge ${sevClass}">${f.severity}</span>
+                                <span class="cvss-tag ${cvssClass}">CVSS ${f.cvss_score}</span>
+                                ${f.category ? `<span class="category-tag">${escapeHtml(f.category)}</span>` : ''}
+                            </div>
+                            <div class="finding-title">${escapeHtml(f.title)}</div>
+                            <div class="finding-hint">▸ Click to expand</div>
+                        </div>
+                        <span style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${getRiskColor(f.severity.toUpperCase())};flex-shrink:0;">${f.cvss_score}</span>
+                    </div>
+                    <div class="finding-details">
+                        <div class="finding-details-inner">
+                            ${f.affected_url ? `
+                            <div class="finding-section-label">ENDPOINT</div>
+                            <div class="finding-endpoint">
+                                <span>${escapeHtml(f.affected_url)}</span>
+                                <button class="copy-btn" onclick="event.stopPropagation();copyToClipboard('${escapeHtml(f.affected_url)}', this)">📋 COPY</button>
+                            </div>` : ''}
+                            <div class="finding-section-label">DESCRIPTION</div>
+                            <div class="finding-desc-text">${escapeHtml(f.description)}</div>
+                            ${f.business_impact ? `
+                            <div class="finding-section-label">BUSINESS IMPACT</div>
+                            <div class="finding-desc-text">${escapeHtml(f.business_impact)}</div>` : ''}
+                            <div class="finding-fix-box">
+                                <div class="fix-label">✓ FIX</div>
+                                <div class="fix-text">${escapeHtml(f.recommendation)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
         function renderWhois(whois) {
-            if (!Object.keys(whois).length || whois.registrar === 'N/A' && !whois.created) return '<p class="no-data">WHOIS data not available for this domain.</p>';
-            let html = '<div class="info-grid">';
+            if (!Object.keys(whois).length || (whois.registrar === 'N/A' && !whois.created)) return '<p class="no-data">WHOIS data not available for this domain.</p>';
+            let html = '<table class="info-table">';
             const items = [
                 ['Registrar', whois.registrar || 'N/A'],
                 ['Created', whois.created || 'N/A'],
@@ -1683,20 +1754,23 @@
                 let cls = '';
                 if (label === 'Days to Expire') {
                     const d = parseInt(value);
-                    if (!isNaN(d)) cls = d < 30 ? 'bad' : d < 90 ? 'warn' : 'good';
+                    if (!isNaN(d)) cls = d < 30 ? 'val-bad' : d < 90 ? 'val-warn' : 'val-good';
                 }
-                html += `<div class="info-item"><div class="label">${label}</div><div class="value ${cls}">${escapeHtml(value)}</div></div>`;
+                html += `<tr><td>${label}</td><td class="${cls}">${escapeHtml(value)}</td></tr>`;
             }
-            html += '</div>';
+            html += '</table>';
             if (whois.name_servers && whois.name_servers.length) {
-                html += `<div style="margin-top:12px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">NAME SERVERS:</strong><div style="margin-top:4px;font-size:12px;color:#888;font-family:'JetBrains Mono',monospace;">${whois.name_servers.join(', ')}</div></div>`;
+                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+                    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">NAME SERVERS</div>
+                    <div style="font-size:12px;color:var(--primary);font-family:var(--font-mono);">${whois.name_servers.join(' • ')}</div>
+                </div>`;
             }
             return html;
         }
 
         function renderGeo(geo) {
             if (!geo.ip) return '<p class="no-data">IP geolocation data not available.</p>';
-            let html = '<div class="info-grid">';
+            let html = '<table class="info-table">';
             const items = [
                 ['IP Address', geo.ip],
                 ['Country', geo.country || 'N/A'],
@@ -1708,15 +1782,15 @@
                 ['Coordinates', geo.lat && geo.lon ? `${geo.lat}, ${geo.lon}` : 'N/A'],
             ];
             for (const [label, value] of items) {
-                html += `<div class="info-item"><div class="label">${label}</div><div class="value">${escapeHtml(String(value))}</div></div>`;
+                html += `<tr><td>${label}</td><td>${escapeHtml(String(value))}</td></tr>`;
             }
-            html += '</div>';
+            html += '</table>';
             return html;
         }
 
         function renderSubdomains(subdomains) {
             if (!subdomains.length) return '<p class="no-data">No subdomains found from common prefixes scan.</p>';
-            let html = `<p style="color:#666;font-size:12px;margin-bottom:12px;">${subdomains.length} subdomains discovered:</p>`;
+            let html = `<p style="color:var(--muted);font-size:12px;margin-bottom:12px;font-family:var(--font-mono);">${subdomains.length} subdomains discovered:</p>`;
             html += '<div class="subdomain-grid">';
             for (const s of subdomains) {
                 html += `<div class="subdomain-item"><span class="sub-name">${escapeHtml(s.subdomain)}</span><span class="sub-ip">${escapeHtml(s.ip)}</span></div>`;
@@ -1743,16 +1817,16 @@
             }
             html += '</div>';
             if (content.meta_description) {
-                html += `<div style="margin-top:12px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">META DESCRIPTION:</strong><div style="margin-top:4px;font-size:12px;color:#999;">${escapeHtml(content.meta_description)}</div></div>`;
+                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">META DESCRIPTION</div><div style="font-size:12px;color:#94a3b8;line-height:1.6;">${escapeHtml(content.meta_description)}</div></div>`;
             }
             if (content.h1_tags && content.h1_tags.length) {
-                html += `<div style="margin-top:10px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">H1 TAGS:</strong><div style="margin-top:4px;font-size:12px;color:#888;">${content.h1_tags.map(h => escapeHtml(h)).join(' | ')}</div></div>`;
+                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">H1 TAGS</div><div style="font-size:12px;color:#94a3b8;">${content.h1_tags.map(h => escapeHtml(h)).join(' | ')}</div></div>`;
             }
             if (content.contact_emails && content.contact_emails.length) {
-                html += `<div style="margin-top:10px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">CONTACT EMAILS:</strong><div style="margin-top:4px;font-size:12px;color:#00ff88;font-family:'JetBrains Mono',monospace;">${content.contact_emails.join(', ')}</div></div>`;
+                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">CONTACT EMAILS</div><div style="font-size:12px;color:var(--primary);font-family:var(--font-mono);">${content.contact_emails.join(', ')}</div></div>`;
             }
             if (content.phone_numbers && content.phone_numbers.length) {
-                html += `<div style="margin-top:10px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">PHONE NUMBERS:</strong><div style="margin-top:4px;font-size:12px;color:#00ff88;font-family:'JetBrains Mono',monospace;">${content.phone_numbers.join(', ')}</div></div>`;
+                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">PHONE NUMBERS</div><div style="font-size:12px;color:var(--primary);font-family:var(--font-mono);">${content.phone_numbers.join(', ')}</div></div>`;
             }
             return html;
         }
@@ -1791,53 +1865,54 @@
             }
             html += '</div>';
             if (emailSec.spf) {
-                html += `<div style="margin-top:12px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">SPF:</strong><div style="margin-top:4px;font-size:11px;color:#00ff88;font-family:'JetBrains Mono',monospace;word-break:break-all;">${escapeHtml(emailSec.spf)}</div></div>`;
+                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">SPF RECORD</div><div style="font-size:11px;color:var(--primary);font-family:var(--font-mono);word-break:break-all;">${escapeHtml(emailSec.spf)}</div></div>`;
             }
             if (emailSec.dmarc) {
-                html += `<div style="margin-top:10px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">DMARC:</strong><div style="margin-top:4px;font-size:11px;color:#00ff88;font-family:'JetBrains Mono',monospace;word-break:break-all;">${escapeHtml(emailSec.dmarc)}</div></div>`;
+                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">DMARC RECORD</div><div style="font-size:11px;color:var(--primary);font-family:var(--font-mono);word-break:break-all;">${escapeHtml(emailSec.dmarc)}</div></div>`;
             }
             if (emailSec.mx_records && emailSec.mx_records.length) {
-                html += `<div style="margin-top:10px;"><strong style="color:#555;font-size:11px;letter-spacing:1px;">MX RECORDS:</strong><div style="margin-top:4px;font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;">${emailSec.mx_records.join('<br>')}</div></div>`;
+                html += `<div style="margin-top:12px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">MX RECORDS</div><div style="font-size:11px;color:#94a3b8;font-family:var(--font-mono);">${emailSec.mx_records.join('<br>')}</div></div>`;
             }
             return html;
         }
 
         function renderWayback(wayback) {
-            if (!Object.keys(wayback).length) return '<p class="no-data">Wayback Machine data not available.</p>';
-            if (!wayback.available) return '<p class="no-data">No archived snapshots found on the Wayback Machine.</p>';
-            let ts = wayback.timestamp || '';
-            let formatted = ts.length >= 8 ? `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}` : ts;
-            let html = '<div class="info-grid">';
-            html += `<div class="info-item"><div class="label">Status</div><div class="value good">Archived</div></div>`;
-            html += `<div class="info-item"><div class="label">Last Snapshot</div><div class="value">${escapeHtml(formatted)}</div></div>`;
-            html += '</div>';
-            if (wayback.url) {
-                html += `<div style="margin-top:12px;"><a href="${escapeHtml(wayback.url)}" target="_blank" style="color:#00ff88;font-size:12px;text-decoration:none;">View on Wayback Machine →</a></div>`;
+            if (!Object.keys(wayback).length) return '';
+            let content = '';
+            if (!wayback.available) {
+                content = '<p class="no-data">No archived snapshots found on the Wayback Machine.</p>';
+            } else {
+                let ts = wayback.timestamp || '';
+                let formatted = ts.length >= 8 ? `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}` : ts;
+                content = `<table class="info-table"><tr><td>Status</td><td class="val-good">Archived</td></tr><tr><td>Last Snapshot</td><td>${escapeHtml(formatted)}</td></tr></table>`;
+                if (wayback.url) {
+                    content += `<div style="margin-top:12px;"><a href="${escapeHtml(wayback.url)}" target="_blank" style="color:var(--primary);font-size:12px;text-decoration:none;font-family:var(--font-mono);">View on Wayback Machine →</a></div>`;
+                }
             }
-            return html;
+            return `<div class="panel-card"><div class="panel-title">📚 ARCHIVE HISTORY</div>${content}</div>`;
         }
 
         function renderSocialPresence(presence) {
-            if (!Object.keys(presence).length) return '<p class="no-data">Social media presence check not available.</p>';
+            if (!Object.keys(presence).length) return '';
             let html = '<div class="social-grid">';
             for (const [platform, info] of Object.entries(presence)) {
                 const dotClass = info.exists ? 'found' : 'not-found';
                 const statusText = info.exists ? 'Found' : 'Not found';
                 html += `<div class="social-item">
-                    <span class="status-dot ${dotClass}"></span>
+                    <span class="sdot ${dotClass}"></span>
                     <div>
                         <div class="platform">${platform}</div>
-                        <div style="font-size:11px;color:#555;">${statusText}</div>
+                        <div style="font-size:11px;color:var(--muted);">${statusText}</div>
                     </div>
-                    ${info.exists ? `<a href="${escapeHtml(info.url)}" target="_blank" style="color:#00ff88;font-size:11px;margin-left:auto;text-decoration:none;">Visit →</a>` : ''}
+                    ${info.exists && info.url ? `<a href="${escapeHtml(info.url)}" target="_blank" style="color:var(--primary);font-size:11px;margin-left:auto;text-decoration:none;font-family:var(--font-mono);">Visit →</a>` : ''}
                 </div>`;
             }
             html += '</div>';
-            return html;
+            return `<div class="panel-card"><div class="panel-title">👤 SOCIAL PRESENCE</div>${html}</div>`;
         }
 
         function renderHTTPMethods(methods) {
-            if (!methods.length) return '<p style="color:#00ff88;font-size:13px;">✓ All dangerous HTTP methods are properly restricted.</p>';
+            if (!methods.length) return '<p style="color:var(--primary);font-size:13px;font-family:var(--font-mono);">✓ All dangerous HTTP methods are properly restricted.</p>';
             let html = '<div class="port-badges">';
             for (const m of methods) {
                 const isDangerous = ['TRACE', 'TRACK', 'PUT', 'DELETE'].includes(m.method);
@@ -1847,24 +1922,26 @@
             return html;
         }
 
-        function renderExposedFiles(exposed200, exposed403) {
-            if (!exposed200.length && !exposed403.length) return '<p class="no-data">No exposed files found. All 100+ paths returned 404.</p>';
+        function renderExposedFiles(files) {
+            const exposed200 = files.filter(f => f.status === 200);
+            const exposed403 = files.filter(f => f.status === 403);
+            if (!exposed200.length && !exposed403.length) return '<p class="no-data">No exposed files found. All paths returned 404.</p>';
             let html = '';
             if (exposed200.length) {
-                html += '<h4 style="color:#ff3355;margin-bottom:8px;">⚠ Accessible (HTTP 200)</h4><ul class="detail-list">';
+                html += `<div style="color:var(--danger);font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--font-mono);">⚠ ACCESSIBLE (HTTP 200)</div><ul class="detail-list">`;
                 for (const f of exposed200) {
                     html += `<li>
-                        <span style="color:${f.severity==='high'?'#ff3355':'#ffaa00'}">[${f.severity.toUpperCase()}]</span>
-                        <a href="${escapeHtml(f.url)}" target="_blank" style="color:#00ff88;flex:1;min-width:0;word-break:break-all;text-decoration:none;">${escapeHtml(f.path)}</a>
-                        <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(f.url)}', this)">Copy</button>
+                        <span style="color:${f.severity==='high'?'var(--danger)':'var(--accent)'};font-size:11px;">[${f.severity.toUpperCase()}]</span>
+                        <a href="${escapeHtml(f.url)}" target="_blank" style="color:var(--primary);flex:1;min-width:0;word-break:break-all;text-decoration:none;font-family:var(--font-mono);font-size:12px;">${escapeHtml(f.path)}</a>
+                        <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(f.url)}', this)">📋 COPY</button>
                     </li>`;
                 }
                 html += '</ul>';
             }
             if (exposed403.length) {
-                html += '<h4 style="color:#ffaa00;margin:16px 0 8px;">🔒 Forbidden (HTTP 403)</h4><ul class="detail-list">';
+                html += `<div style="color:var(--accent);font-size:12px;font-weight:600;margin:16px 0 8px;font-family:var(--font-mono);">🔒 FORBIDDEN (HTTP 403)</div><ul class="detail-list">`;
                 for (const f of exposed403) {
-                    html += `<li style="color:#666;">${escapeHtml(f.path)}</li>`;
+                    html += `<li style="color:var(--muted);">${escapeHtml(f.path)}</li>`;
                 }
                 html += '</ul>';
             }
@@ -1879,8 +1956,8 @@
                 html += `<tr>
                     <td style="color:#fff;font-weight:600;">${name}</td>
                     <td>${icon}</td>
-                    <td style="color:#555;font-family:'JetBrains Mono',monospace;font-size:11px;">${escapeHtml(info.expected || '')}</td>
-                    <td style="color:${info.present ? '#00ff88' : '#ff3355'};font-family:'JetBrains Mono',monospace;font-size:11px;">${info.present ? escapeHtml(info.actual || 'Set') : 'Missing'}</td>
+                    <td style="color:var(--muted);font-size:11px;">${escapeHtml(info.expected || '')}</td>
+                    <td style="color:${info.present ? 'var(--primary)' : 'var(--danger)'};font-size:11px;">${info.present ? escapeHtml(info.actual || 'Set') : 'Missing'}</td>
                 </tr>`;
             }
             html += '</table></div>';
@@ -1895,9 +1972,9 @@
             }
             html += '</div>';
             if (Object.keys(techDetail).length) {
-                html += '<div style="margin-top:12px;font-size:12px;color:#888;">';
+                html += '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;font-family:var(--font-mono);">';
                 for (const [key, val] of Object.entries(techDetail)) {
-                    html += `<div><strong style="color:#555;">${key}:</strong> <span style="color:#ccc;">${escapeHtml(String(val))}</span></div>`;
+                    html += `<div style="margin-bottom:4px;"><span style="color:var(--muted);">${key}:</span> <span style="color:var(--text);">${escapeHtml(String(val))}</span></div>`;
                 }
                 html += '</div>';
             }
@@ -1906,24 +1983,24 @@
 
         function renderSSL(ssl) {
             if (!Object.keys(ssl).length) return '<p class="no-data">No SSL data available.</p>';
-            if (ssl.error) return `<p style="color:#ff3355;">SSL Error: ${escapeHtml(ssl.error)}</p>`;
+            if (ssl.error) return `<p style="color:var(--danger);font-family:var(--font-mono);">SSL Error: ${escapeHtml(ssl.error)}</p>`;
             let html = '<div class="ssl-grid">';
             const items = [
-                ['Status', ssl.valid ? '✓ Valid' : '✗ Invalid', ssl.valid ? '#00ff88' : '#ff3355'],
-                ['Days Left', String(ssl.days_remaining || 'N/A'), ssl.days_remaining > 30 ? '#00ff88' : '#ff3355'],
+                ['Status', ssl.valid ? '✓ Valid' : '✗ Invalid', ssl.valid ? 'var(--primary)' : 'var(--danger)'],
+                ['Days Left', String(ssl.days_remaining || 'N/A'), ssl.days_remaining > 30 ? 'var(--primary)' : 'var(--danger)'],
                 ['Expires', ssl.expires || 'N/A', '#fff'],
                 ['Issued', ssl.issued || 'N/A', '#fff'],
                 ['Issuer', ssl.issuer || 'N/A', '#fff'],
                 ['Subject', ssl.subject || 'N/A', '#fff'],
-                ['Protocol', ssl.protocol || 'N/A', '#00ff88'],
-                ['Old TLS', ssl.deprecated_tls ? 'YES ⚠' : 'No', ssl.deprecated_tls ? '#ff3355' : '#00ff88'],
+                ['Protocol', ssl.protocol || 'N/A', 'var(--primary)'],
+                ['Old TLS', ssl.deprecated_tls ? 'YES ⚠' : 'No', ssl.deprecated_tls ? 'var(--danger)' : 'var(--primary)'],
             ];
             for (const [label, value, color] of items) {
                 html += `<div class="ssl-item"><div class="label">${label}</div><div class="value" style="color:${color}">${value}</div></div>`;
             }
             html += '</div>';
             if (ssl.sans && ssl.sans.length) {
-                html += `<div style="margin-top:12px;"><strong style="color:#555;font-size:12px;letter-spacing:1px;">SANs:</strong><div style="font-size:12px;color:#888;margin-top:4px;word-break:break-all;font-family:'JetBrains Mono',monospace;">${ssl.sans.join(', ')}</div></div>`;
+                html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--font-mono);">SUBJECT ALT NAMES</div><div style="font-size:11px;color:#94a3b8;word-break:break-all;font-family:var(--font-mono);">${ssl.sans.join(', ')}</div></div>`;
             }
             return html;
         }
@@ -1932,7 +2009,7 @@
             if (!emails.length) return '<p class="no-data">No email addresses found in page source.</p>';
             let html = '<ul class="detail-list">';
             for (const e of emails) {
-                html += `<li>✉️ <span style="flex:1;min-width:0;">${escapeHtml(e)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(e)}', this)">Copy</button></li>`;
+                html += `<li>✉️ <span style="flex:1;min-width:0;color:var(--primary);">${escapeHtml(e)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(e)}', this)">📋 COPY</button></li>`;
             }
             html += '</ul>';
             return html;
@@ -1943,13 +2020,13 @@
             let html = '';
             for (const f of forms) {
                 html += `<div class="form-card">
-                    <div class="form-meta">Form #${f.index} • Method: <strong>${f.method}</strong> • Action: <code style="color:#00d4ff;">${escapeHtml(f.action || '(same page)')}</code> • ${f.input_count} inputs ${f.has_password ? '🔑' : ''}</div>`;
+                    <div class="form-meta">Form #${f.index} • Method: <strong style="color:#fff;">${f.method}</strong> • Action: <code style="color:var(--secondary);">${escapeHtml(f.action || '(same page)')}</code> • ${f.input_count} inputs ${f.has_password ? '🔑' : ''}</div>`;
                 if (f.issues && f.issues.length) {
                     for (const issue of f.issues) {
                         html += `<div class="form-issue">⚠ ${escapeHtml(issue)}</div>`;
                     }
                 } else {
-                    html += '<div style="color:#00ff88;font-size:12px;">✓ No issues detected</div>';
+                    html += '<div style="color:var(--primary);font-size:12px;font-family:var(--font-mono);">✓ No issues detected</div>';
                 }
                 html += '</div>';
             }
@@ -1974,9 +2051,9 @@
             for (const [platform, links] of Object.entries(social)) {
                 for (const link of links) {
                     html += `<li>
-                        <strong style="color:#00ff88;">${platform}:</strong>
-                        <a href="${escapeHtml(link)}" target="_blank" style="color:#888;flex:1;min-width:0;word-break:break-all;text-decoration:none;">${escapeHtml(link)}</a>
-                        <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(link)}', this)">Copy</button>
+                        <strong style="color:var(--primary);">${platform}:</strong>
+                        <a href="${escapeHtml(link)}" target="_blank" style="color:#94a3b8;flex:1;min-width:0;word-break:break-all;text-decoration:none;font-family:var(--font-mono);font-size:12px;">${escapeHtml(link)}</a>
+                        <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(link)}', this)">📋 COPY</button>
                     </li>`;
                 }
             }
@@ -1986,10 +2063,10 @@
 
         function renderExternal(domains) {
             if (!domains.length) return '<p class="no-data">No external domains detected.</p>';
-            let html = `<p style="color:#666;font-size:12px;margin-bottom:10px;">${domains.length} external domains loading resources:</p>`;
+            let html = `<p style="color:var(--muted);font-size:12px;margin-bottom:10px;font-family:var(--font-mono);">${domains.length} external domains loading resources:</p>`;
             html += '<div class="tech-tags">';
             for (const d of domains) {
-                html += `<span class="tech-tag" style="color:#888;border-color:#1a1a3a;">${escapeHtml(d)}</span>`;
+                html += `<span class="tech-tag" style="color:#94a3b8;border-color:var(--border);">${escapeHtml(d)}</span>`;
             }
             html += '</div>';
             return html;
@@ -2001,10 +2078,10 @@
             for (const js of jsFiles) {
                 let issues = '';
                 if (js.issues && js.issues.length) {
-                    issues = ' <span style="color:#ff3355;">(' + js.issues.join(', ') + ')</span>';
+                    issues = ` <span style="color:var(--danger);">(${js.issues.join(', ')})</span>`;
                 }
                 const icon = js.external ? '🌐' : '📄';
-                html += `<li>${icon} <span style="flex:1;min-width:0;word-break:break-all;color:#ccc;">${escapeHtml(js.src)}</span>${issues}<button class="copy-btn" onclick="copyToClipboard('${escapeHtml(js.src)}', this)">Copy</button></li>`;
+                html += `<li>${icon} <span style="flex:1;min-width:0;word-break:break-all;color:#94a3b8;font-size:12px;">${escapeHtml(js.src)}</span>${issues}<button class="copy-btn" onclick="copyToClipboard('${escapeHtml(js.src)}', this)">📋 COPY</button></li>`;
             }
             html += '</ul>';
             return html;
@@ -2014,35 +2091,12 @@
             if (!currentScanId) return;
             if (type === 'pdf') {
                 window.open('/report/' + currentScanId + '/pdf', '_blank');
-                showToast('📥 Generating PDF report...');
+                showToast('⬇ Generating PDF report...');
             } else if (type === 'html') {
                 window.open('/report/' + currentScanId, '_blank');
-                showToast('📄 Opening HTML report...');
-            } else {
-                // JSON fallback
-                fetch(`/report/${currentScanId}/json`)
-                    .then(r => r.blob())
-                    .then(blob => {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `vulnscan-report-${currentScanId}.json`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        showToast('📥 JSON report downloaded');
-                    });
+                showToast('⬇ Opening HTML report...');
             }
         }
-
-        function downloadCurrentReport() {
-            downloadReport('pdf');
-        }
     </script>
-    <style>
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
 </body>
 </html>
