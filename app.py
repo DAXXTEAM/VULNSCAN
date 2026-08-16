@@ -192,7 +192,7 @@ def api_docs():
         'name': 'VULNSCAN',
         'version': '4.0',
         'description': 'Automated Web Security Scanner - Passive Recon',
-        'modules': 27,
+        'modules': 28,
         'endpoints': {
             'POST /scan': 'Start single scan - body: {"url": "https://example.com"}',
             'GET /scan/<id>/status': 'Get scan status (running/complete/error)',
@@ -237,6 +237,7 @@ def api_docs():
             'Server Version Disclosure',
             'Social Media Links',
             'External Resources'
+            'Secret Scanning (24 patterns)',
         ]
     })
 

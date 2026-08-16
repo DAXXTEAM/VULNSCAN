@@ -2185,6 +2185,110 @@ def check_cert_transparency(domain):
 
 # ===================== MAIN SCAN FUNCTION =====================
 
+
+# ═══════════════════════════════════════════════════════════════
+# SECRET SCANNING MODULE - Detects exposed credentials in source
+# ═══════════════════════════════════════════════════════════════
+
+SECRET_PATTERNS = {
+    'Stripe Secret Key': r'sk_(live|test)_[a-zA-Z0-9]{20,}',
+    'Stripe Publishable Key': r'pk_(live|test)_[a-zA-Z0-9]{20,}',
+    'Razorpay Key': r'rzp_(live|test)_[a-zA-Z0-9]{14,}',
+    'AWS Access Key': r'AKIA[0-9A-Z]{16}',
+    'Google API Key': r'AIza[0-9A-Za-z\-_]{35}',
+    'Firebase URL': r'https://[a-z0-9-]+\.firebaseio\.com',
+    'GitHub Token': r'gh[pousr]_[a-zA-Z0-9]{36,}',
+    'Slack Token': r'xox[baprs]-[0-9a-zA-Z\-]+',
+    'Slack Webhook': r'https://hooks\.slack\.com/services/[A-Z0-9]+/[A-Z0-9]+/[a-zA-Z0-9]+',
+    'Discord Token': r'[MN][a-zA-Z0-9]{23}\.[a-zA-Z0-9\-_]{6}\.[a-zA-Z0-9\-_]{27}',
+    'Telegram Bot Token': r'[0-9]{8,10}:[a-zA-Z0-9_\-]{35}',
+    'Twilio Key': r'SK[0-9a-f]{32}',
+    'SendGrid Key': r'SG\.[a-zA-Z0-9\-_]{22}\.[a-zA-Z0-9\-_]{43}',
+    'MongoDB URL': r'mongodb(\+srv)?://[^\s"\'<>]+',
+    'MySQL/Postgres URL': r'(mysql|postgresql|postgres)://[^\s"\'<>]+',
+    'Redis URL': r'redis://[^\s"\'<>]+',
+    'Private Key': r'-----BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY-----',
+    'JWT Token': r'eyJ[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+',
+    'Basic Auth URL': r'https?://[a-zA-Z0-9_\-]+:[a-zA-Z0-9_\-]+@',
+    'Generic API Key': r'[Aa][Pp][Ii][_\-]?[Kk][Ee][Yy][\s:=]+["\'"]?([a-zA-Z0-9\-_]{16,})',
+    'Generic Secret': r'[Ss][Ee][Cc][Rr][Ee][Tt][\s:=]+["\'"]?([a-zA-Z0-9\-_]{16,})',
+    'Generic Token': r'[Tt][Oo][Kk][Ee][Nn][\s:=]+["\'"]?([a-zA-Z0-9\-_]{16,})',
+    'Ethereum Private Key': r'0x[a-fA-F0-9]{64}',
+    'PayPal Token': r'access_token\$production\$[0-9a-z]{16}\$[0-9a-f]{32}',
+}
+
+
+def check_secrets(url):
+    """Scan page source and JS files for exposed secrets/credentials."""
+    findings = []
+    secrets_detail = []
+    try:
+        r = requests.get(url, timeout=10, verify=False, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+
+        sources = [('page_source', r.text)]
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+        for script in soup.find_all('script', src=True):
+            src = script['src']
+            if not src.startswith('http'):
+                src = url.rstrip('/') + '/' + src.lstrip('/')
+            try:
+                js_r = requests.get(src, timeout=8, verify=False, headers={'User-Agent': 'Mozilla/5.0'})
+                sources.append((src.split('/')[-1], js_r.text))
+            except:
+                pass
+
+        for source_name, content in sources:
+            for key_type, pattern in SECRET_PATTERNS.items():
+                try:
+                    matches = re.findall(pattern, content)
+                except:
+                    continue
+                for match in matches:
+                    val = match if isinstance(match, str) else match[0] if match else ''
+                    if len(val) < 8:
+                        continue
+                    masked = val[:12] + '...' + val[-4:] if len(val) > 16 else val[:8] + '...'
+                    is_critical = any(x in key_type for x in ['Secret', 'Private', 'AWS', 'Token', 'MongoDB', 'MySQL', 'Postgres', 'Redis'])
+                    finding = {
+                        'severity': 'critical' if is_critical else 'high',
+                        'cvss_score': 9.8 if is_critical else 8.5,
+                        'title': f'Exposed {key_type}',
+                        'description': f'{key_type} found in {source_name}. This credential is publicly accessible and must be rotated immediately.',
+                        'affected_url': url,
+                        'recommendation': f'Remove {key_type} from public code immediately. Rotate/revoke the exposed credential.',
+                        'category': 'Secret Scanning',
+                        'secret_type': key_type,
+                        'value_full': val,
+                        'value_masked': masked,
+                        'secret_source': source_name,
+                    }
+                    findings.append(finding)
+                    secrets_detail.append({
+                        'type': key_type,
+                        'value_full': val,
+                        'value_masked': masked,
+                        'source': source_name,
+                        'severity': finding['severity'],
+                        'cvss': finding['cvss_score'],
+                    })
+    except Exception as e:
+        pass
+
+    if not findings:
+        findings.append({
+            'severity': 'info',
+            'cvss_score': 0.0,
+            'title': 'No Exposed Secrets Detected',
+            'description': f'Scanned page source and JavaScript files for {len(SECRET_PATTERNS)} secret patterns. No exposed credentials found.',
+            'affected_url': url,
+            'recommendation': 'Continue monitoring for accidental secret exposure.',
+            'category': 'Secret Scanning',
+        })
+
+    return findings, secrets_detail
+
+
 def run_scan(url):
     url = normalize_url(url)
     scan_id = str(uuid.uuid4())
@@ -2216,6 +2320,7 @@ def run_scan(url):
         "wayback_detail": {},
         # v4.0 additions
         "reputation_detail": {},
+        "secrets_detail": [],
         "ct_detail": {},
         "cve_findings": [],
     }
@@ -2329,6 +2434,11 @@ def run_scan(url):
         f, d = check_cert_transparency(domain)
         return "Certificate Transparency", f, ("ct_detail", d)
 
+
+    def run_secrets():
+        f, d = check_secrets(url)
+        return "Secret Scanning", f, ("secrets_detail", d)
+
     checks = [
         run_headers, run_ssl, run_tech, run_exposed, run_dns,
         run_robots, run_cookies, run_cors, run_server,
@@ -2340,6 +2450,8 @@ def run_scan(url):
         run_social_presence, run_wayback,
         # v4.0 modules
         run_reputation, run_ct,
+        # v5.0 secret scanning
+        run_secrets,
     ]
 
     progress = []

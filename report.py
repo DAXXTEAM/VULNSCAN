@@ -151,6 +151,16 @@ def generate_report(scan_results, target_url=None):
         else:
             business_impact = "Low business risk. Provides information that could assist reconnaissance efforts."
 
+        # Secret scanning section for PDF
+        secret_section = ""
+        if f.get('category') == 'Secret Scanning' and f.get('value_masked'):
+            secret_section = f"""
+            <div class="finding-section" style="background:rgba(255,0,64,0.05);border:1px solid rgba(255,0,64,0.2);border-radius:6px;padding:12px;margin-top:8px;">
+                <div class="finding-label" style="color:#ff0040;">🔑 EXPOSED CREDENTIAL (MASKED)</div>
+                <div class="finding-value mono" style="color:#ff0040;font-size:14px;">{escape(f.get('value_masked', 'N/A'))}</div>
+                <div class="finding-value" style="font-size:11px;color:#888;margin-top:6px;">⚠️ Full value available in web dashboard. Rotate this key immediately.</div>
+            </div>"""
+
         findings_html += f"""
         <div class="finding-card" style="border-left: 4px solid {color}; background: {bg};">
             <div class="finding-header">
@@ -169,7 +179,7 @@ def generate_report(scan_results, target_url=None):
             <div class="finding-section">
                 <div class="finding-label">Evidence</div>
                 <div class="finding-value evidence-box">{escape(evidence)}</div>
-            </div>
+            </div>{secret_section}
             <div class="finding-section">
                 <div class="finding-label">Business Impact</div>
                 <div class="finding-value">{business_impact}</div>

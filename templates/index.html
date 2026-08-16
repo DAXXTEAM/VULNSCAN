@@ -1126,6 +1126,78 @@
             gap: 8px;
         }
 
+
+        /* ═══════════════════════════════════════════ */
+        /* SECRET SCANNING UI                         */
+        /* ═══════════════════════════════════════════ */
+        .secret-value-container {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            font-family: var(--font-mono);
+        }
+        .secret-value-container .secret-label {
+            font-size: 10px;
+            color: var(--danger);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .secret-value-container .secret-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .secret-value-container code {
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--danger);
+            word-break: break-all;
+        }
+        .secret-value-container .reveal-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-mono);
+            white-space: nowrap;
+            min-height: unset;
+        }
+        .secret-value-container .reveal-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        .secret-rotate-warning {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(239, 68, 68, 0.08);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--danger);
+            font-weight: 600;
+        }
+        .secret-source-badge {
+            font-size: 10px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+        }
+
         /* ═══════════════════════════════════════════ */
         /* STICKY BOTTOM BAR BUTTONS                  */
         /* ═══════════════════════════════════════════ */
@@ -2016,12 +2088,46 @@
 
         // ===== RENDER FUNCTIONS =====
 
+
+        function toggleSecret(id) {
+            const masked = document.getElementById('masked_' + id);
+            const full = document.getElementById('full_' + id);
+            const btn = document.getElementById('btn_' + id);
+            if (full.style.display === 'none') {
+                full.style.display = 'inline';
+                masked.style.display = 'none';
+                btn.textContent = '🙈 Hide';
+            } else {
+                full.style.display = 'none';
+                masked.style.display = 'inline';
+                btn.textContent = '👁 Reveal';
+            }
+        }
+
         function renderFindings(findings) {
             if (!findings || !findings.length) return '<p class="no-data">No findings detected.</p>';
             let html = '<div class="findings-list">';
+            let secretIdx = 0;
             findings.forEach((f, idx) => {
                 const sevClass = `sev-${f.severity}`;
                 const cvssClass = getCvssClass(f.cvss_score);
+                const isSecret = f.category === 'Secret Scanning' && f.value_full;
+                let secretHTML = '';
+                if (isSecret) {
+                    const sid = 'secret_' + secretIdx;
+                    secretHTML = `
+                            <div class="secret-value-container">
+                                <div class="secret-label">🔑 EXPOSED CREDENTIAL</div>
+                                <div class="secret-display">
+                                    <code id="masked_${sid}">${escapeHtml(f.value_masked)}</code>
+                                    <code id="full_${sid}" style="display:none">${escapeHtml(f.value_full)}</code>
+                                    <button id="btn_${sid}" class="reveal-btn" onclick="event.stopPropagation();toggleSecret('${sid}')">👁 Reveal</button>
+                                </div>
+                                ${f.secret_source ? `<div style="margin-top:6px;"><span class="secret-source-badge">Source: ${escapeHtml(f.secret_source)}</span></div>` : ''}
+                                <div class="secret-rotate-warning">⚠️ Rotate this key immediately</div>
+                            </div>`;
+                    secretIdx++;
+                }
                 html += `
                 <div class="finding-card" style="animation-delay:${idx * 0.05}s">
                     <div class="finding-card-header ${sevClass}" onclick="toggleFinding(this)">
@@ -2046,6 +2152,7 @@
                             </div>` : ''}
                             <div class="finding-section-label">DESCRIPTION</div>
                             <div class="finding-desc-text">${escapeHtml(f.description)}</div>
+                            ${secretHTML}
                             ${f.business_impact ? `
                             <div class="finding-section-label">BUSINESS IMPACT</div>
                             <div class="finding-desc-text">${escapeHtml(f.business_impact)}</div>` : ''}
