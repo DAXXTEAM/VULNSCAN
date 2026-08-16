@@ -1,8 +1,17 @@
 [
   {
-    "scan_id": "e65ff306-cfa7-4ece-9651-1dbf6e6a58b9",
+    "scan_id": "a6fcbbdd-6ef5-4b37-a71e-ef2a8910ac54",
     "url": "https://www.rankersworld.in",
-    "date": "2026-08-16T20:17:49.706990",
+    "date": "2026-08-16T20:32:05.961537",
+    "findings": 153,
+    "risk_score": 5.9,
+    "critical": 0,
+    "high": 29
+  },
+  {
+    "scan_id": "b669e789-789f-473c-a0fe-b2fc56fbadd0",
+    "url": "https://www.rankersworld.in",
+    "date": "2026-08-16T20:33:41.539720",
     "findings": 153,
     "risk_score": 5.9,
     "critical": 0,

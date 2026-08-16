@@ -1130,6 +1130,16 @@
         /* ═══════════════════════════════════════════ */
         /* SECRET SCANNING UI                         */
         /* ═══════════════════════════════════════════ */
+        .no-secrets {
+            padding: 32px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .no-secrets p:first-child {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
         .secret-value-container {
             background: rgba(239, 68, 68, 0.05);
             border: 1px solid rgba(239, 68, 68, 0.2);
@@ -1715,23 +1725,26 @@
             body.style.display = terminalMinimized ? 'none' : 'block';
         }
 
-        function copyToClipboard(text, btn) {
+        function copyToClipboard(text, btnEl) {
             navigator.clipboard.writeText(text).then(() => {
-                btn.textContent = '✓ Copied';
-                btn.classList.add('copied');
-                showToast('✓ Copied!', 1500);
-                setTimeout(() => { btn.textContent = '📋 COPY'; btn.classList.remove('copied'); }, 1500);
+                const orig = btnEl.textContent;
+                btnEl.textContent = '✓ Copied!';
+                btnEl.style.color = '#00ff88';
+                setTimeout(() => { 
+                    btnEl.textContent = orig; 
+                    btnEl.style.color = '';
+                }, 2000);
             }).catch(() => {
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
+                // Fallback
+                const el = document.createElement('textarea');
+                el.value = text;
+                document.body.appendChild(el);
+                el.select();
                 document.execCommand('copy');
-                document.body.removeChild(ta);
-                btn.textContent = '✓ Copied';
-                btn.classList.add('copied');
-                showToast('✓ Copied!', 1500);
-                setTimeout(() => { btn.textContent = '📋 COPY'; btn.classList.remove('copied'); }, 1500);
+                document.body.removeChild(el);
+                const orig = btnEl.textContent;
+                btnEl.textContent = '✓ Copied!';
+                setTimeout(() => { btnEl.textContent = orig; }, 2000);
             });
         }
 
@@ -2005,6 +2018,7 @@
                 { id: 'headers', icon: '🛡️', label: 'Headers', count: '' },
                 { id: 'reputation', icon: '🛡️', label: 'Reputation', count: '' },
                 { id: 'ctlogs', icon: '📜', label: 'CT Logs', count: (details.ct_detail && details.ct_detail.subdomains_count) || '' },
+                { id: 'secrets', icon: '🔑', label: 'Secrets', count: (data.findings || []).filter(f => f.category === 'Secret Scanning' && f.value_full).length },
             ];
 
             let tabNavHTML = '';
@@ -2073,12 +2087,76 @@
             // CT Logs panel
             panelsHTML += `<div id="panel-ctlogs" class="tab-panel">${renderCTLogs(details.ct_detail || {})}</div>`;
 
+            // Secrets panel
+            const secretFindings = (data.findings || []).filter(f => f.category === 'Secret Scanning' && f.value_full);
+            panelsHTML += `<div id="panel-secrets" class="tab-panel"><div class="panel-card"><div class="panel-title">🔑 SECRET SCANNING RESULTS</div>${renderSecrets(secretFindings, details.secrets_detail || [])}</div></div>`;
+
             document.getElementById('tabPanels').innerHTML = panelsHTML;
 
             setTimeout(() => {
                 document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 200);
                 loadHistory();
+        }
+
+
+        function renderSecrets(secretFindings, secretsDetail) {
+            if (!secretFindings || secretFindings.length === 0) {
+                return `<div class="no-secrets">
+                    <p>No exposed secrets detected in page source or JS files.</p>
+                    <p style="color:#64748b;font-size:12px;">Scanned 24 secret patterns including API keys, tokens, private keys, and credentials.</p>
+                </div>`;
+            }
+            let html = '<div class="findings-list">';
+            let secretIdx = 0;
+            secretFindings.forEach((f, idx) => {
+                const sevClass = `sev-${f.severity}`;
+                const cvssClass = getCvssClass(f.cvss_score);
+                const sid = 'stab_secret_' + secretIdx;
+                secretIdx++;
+                html += `
+                <div class="finding-card" style="animation-delay:${idx * 0.05}s">
+                    <div class="finding-card-header ${sevClass}" onclick="toggleFinding(this)">
+                        <div class="finding-left">
+                            <div class="finding-badges">
+                                <span class="sev-badge ${sevClass}">${escapeHtml(f.severity)}</span>
+                                <span class="cvss-tag ${cvssClass}">CVSS ${f.cvss_score}</span>
+                                <span class="category-tag">Secret Scanning</span>
+                            </div>
+                            <div class="finding-title">${escapeHtml(f.title)}</div>
+                            <div class="finding-hint">▸ Click to expand</div>
+                        </div>
+                        <span class="cvss-score" style="font-family:var(--font-mono);font-weight:700;color:${getRiskColor(f.severity.toUpperCase())};flex-shrink:0;">${f.cvss_score}</span>
+                    </div>
+                    <div class="finding-details">
+                        <div class="finding-details-inner">
+                            ${f.affected_url ? `<div class="finding-section-label">ENDPOINT</div>
+                            <div class="finding-endpoint">
+                                <span>${escapeHtml(f.affected_url)}</span>
+                                <button class="copy-btn" onclick="event.stopPropagation();copyToClipboard('${escapeHtml(f.affected_url)}', this)">📋 COPY</button>
+                            </div>` : ''}
+                            <div class="finding-section-label">DESCRIPTION</div>
+                            <div class="finding-desc-text">${escapeHtml(f.description)}</div>
+                            <div class="secret-value-container">
+                                <div class="secret-label">🔑 EXPOSED CREDENTIAL</div>
+                                <div class="secret-display">
+                                    <code id="masked_${sid}">${escapeHtml(f.value_masked)}</code>
+                                    <code id="full_${sid}" style="display:none">${escapeHtml(f.value_full)}</code>
+                                    <button id="btn_${sid}" class="reveal-btn" onclick="event.stopPropagation();toggleSecret('${sid}')">👁 Reveal</button>
+                                </div>
+                                ${f.secret_source ? `<div style="margin-top:6px;"><span class="secret-source-badge">Source: ${escapeHtml(f.secret_source)}</span></div>` : ''}
+                                <div class="secret-rotate-warning">⚠️ Rotate this key immediately</div>
+                            </div>
+                            <div class="finding-fix-box">
+                                <div class="fix-label">✓ FIX</div>
+                                <div class="fix-text">${escapeHtml(f.recommendation || 'Remove this secret from source code and rotate it immediately.')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            return html;
         }
 
         function escapeHtml(str) {
